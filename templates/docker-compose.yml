@@ -1,0 +1,27 @@
+# Ambiente local de paridade (dev). Segredos aqui são APENAS de desenvolvimento.
+services:
+  app:
+    build: .
+    ports:
+      - "{{PORTA_DEV}}:{{PORTA_CONTAINER}}"
+    environment:
+      DATABASE_URL: postgres://genial:genial@db:5432/genial
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: genial
+      POSTGRES_PASSWORD: genial   # só dev — em produção, segredo em vault/KMS
+      POSTGRES_DB: genial
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U genial"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+volumes:
+  pgdata: {}

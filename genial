@@ -1,0 +1,326 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""genial — Genial Labs: a arquitetura que guia seu código.
+
+Comandos:
+  genial               banner + resumo
+  genial banner        arte GENIAL LABS (azul tech)
+  genial init [DIR]    projeto novo: arquitetura de dados + skeleton + Docker/compose/k8s + gates CI
+  genial doctor        auditoria do projeto atual (roda a skill cidadela — Fase 0)
+  genial skills        lista skills instaladas (Codex / Claude Code)
+  genial deploy        degrau atual de infraestrutura (0–5) + próximo passo
+  genial update        atualiza o pacote
+  genial uninstall     remove tudo que o instalador colocou
+"""
+import argparse
+import datetime
+import os
+import shutil
+import subprocess
+import sys
+
+VERSAO = "1.0.0"
+REPO_GIT = "https://github.com/brunao23/genial-labs.git"
+INSTALL_CMD = "curl -fsSL https://raw.githubusercontent.com/brunao23/genial-labs/main/install.sh | bash"
+
+
+def _cor(num):
+    if os.environ.get("NO_COLOR") or not sys.stdout.isatty():
+        return lambda s: s
+    return lambda s: "\033[%sm%s\033[0m" % (num, s)
+
+
+AZUL, CINZA, OK, ERRO, BOLDO = _cor("1;36"), _cor("2"), _cor("1;32"), _cor("1;31"), _cor("1")
+
+LETRAS = {
+    "G": ["██████╗ ", "██╔══██╗", "██████╔╝", "██╔══██╗", "██║  ██║", "╚═╝  ╚═╝"],
+    "E": ["███████╗", "██╔════╝", "█████╗  ", "██╔══╝  ", "███████╗", "╚══════╝"],
+    "N": ["███╗   ███╗", "████╗ ████║", "██╔████╔██║", "██║╚██╔╝██║", "██║ ╚═╝ ██║", "╚═╝     ╚═╝"],
+    "I": ["███╗", "████╗", "██╔██║", "██║╚██║", "██║ ╚██║", "╚═╝  ╚═╝"],
+    "A": [" █████╗ ", "██╔══██╗", "███████║", "██╔══██║", "██║  ██║", "╚═╝  ╚═╝"],
+    "L": ["██╗     ", "██║     ", "██║     ", "██║     ", "███████╗", "╚══════╝"],
+    "B": ["██████╗ ", "██╔══██╗", "██████╔╝", "██╔═══██╗", "██║   ██║", "╚═╝   ╚═╝"],
+    "S": ["███████╗", "██╔════╝", "█████╗  ", "╚════╝  ", "███████╗", "╚══════╝"],
+}
+
+
+def arte():
+    saida = []
+    for i in range(6):
+        palavras = []
+        for w in ("GENIAL", "LABS"):
+            palavras.append("  ".join(LETRAS[c][i] for c in w))
+        saida.append("   ".join(palavras))
+    return saida
+
+
+def banner():
+    for linha in arte():
+        print(AZUL(linha))
+    print(AZUL("    Genial Labs · arquitetura + dados + segurança + infra que guia seu código"))
+    print(CINZA("    v%s · comandos: init | doctor | skills | deploy | update | uninstall" % VERSAO))
+
+
+def home():
+    env = os.environ.get("GENIAL_HOME")
+    if env:
+        return os.path.abspath(env)
+    aqui = os.path.dirname(os.path.abspath(__file__))
+    for c in (os.path.join(os.path.expanduser("~"), ".genial-labs"), aqui):
+        if os.path.isdir(os.path.join(c, "templates")) and os.path.isdir(os.path.join(c, "skills")):
+            return c
+    return os.path.join(os.path.expanduser("~"), ".genial-labs")
+
+
+STACKS = {
+    "py": {"porta_container": "8000", "porta_dev": "8000",
+           "run": "uvicorn main:app --port 8000", "test": "pytest -q"},
+    "node": {"porta_container": "3000", "porta_dev": "3000",
+             "run": "npm start", "test": "npm test"},
+    "go": {"porta_container": "8080", "porta_dev": "8080",
+           "run": "go run .", "test": "go test ./..."},
+}
+
+
+def cmd_init(argv):
+    p = argparse.ArgumentParser(prog="genial init",
+                                description="Cria um projeto novo já com arquitetura de dados, skeleton, Docker/compose/k8s e gates de CI.")
+    p.add_argument("dir", nargs="?", default=".", help="diretório do projeto (padrão: atual)")
+    p.add_argument("--stack", choices=sorted(STACKS) + ["auto"], default="auto")
+    a = p.parse_args(argv)
+    h = home()
+    tpl = os.path.join(h, "templates")
+    if not os.path.isdir(tpl):
+        print(ERRO("Pacote incompleto em %s — rode: %s" % (h, INSTALL_CMD)))
+        return 1
+    raiz = a.dir
+    stack = a.stack
+    if stack == "auto":
+        if os.path.exists(os.path.join(raiz, "go.mod")):
+            stack = "go"
+        elif os.path.exists(os.path.join(raiz, "package.json")):
+            stack = "node"
+        elif any(os.path.exists(os.path.join(raiz, f)) for f in ("pyproject.toml", "requirements.txt", "setup.py")):
+            stack = "py"
+        else:
+            stack = "py"
+            print(CINZA("Stack não detectada — usando 'py' (escolha com --stack py|node|go)."))
+    cfg = STACKS[stack]
+    d = os.path.abspath(raiz)
+    os.makedirs(d, exist_ok=True)
+    nome = os.path.basename(d.rstrip(os.sep)) or "projeto"
+    hoje = datetime.date.today().isoformat()
+    subs = {"{{NOME}}": nome, "{{DATA}}": hoje, "{{STACK}}": stack,
+            "{{PORTA_CONTAINER}}": cfg["porta_container"], "{{PORTA_DEV}}": cfg["porta_dev"],
+            "{{COMANDO_RUN}}": cfg["run"], "{{COMANDO_TEST}}": cfg["test"]}
+    criados = []
+
+    def ler(rel):
+        with open(os.path.join(tpl, rel), encoding="utf-8") as f:
+            return f.read()
+
+    def put(rel, conteudo):
+        alvo = os.path.join(d, rel)
+        if os.path.exists(alvo):
+            print("  = %s (já existe, mantido)" % rel)
+            return
+        pai = os.path.dirname(alvo)
+        if pai:
+            os.makedirs(pai, exist_ok=True)
+        with open(alvo, "w", encoding="utf-8") as f:
+            for k, v in subs.items():
+                conteudo = conteudo.replace(k, v)
+            f.write(conteudo)
+        criados.append(rel)
+        print("  + %s" % rel)
+
+    print(BOLDO("Genial Labs · criando '%s' (stack: %s)" % (nome, stack)))
+    put("ARCHITETURA-DADOS.md", ler("ARCHITETURA-DADOS.md"))
+    sk_dir = os.path.join(tpl, "skeletons", stack)
+    for f in sorted(os.listdir(sk_dir)):
+        put(f, ler(os.path.join("skeletons", stack, f)))
+    put("Dockerfile", ler("Dockerfile." + stack))
+    put(".dockerignore", ler(".dockerignore"))
+    put(".env.example", ler(".env.example"))
+    put(".gitignore", ler(".gitignore"))
+    put("docker-compose.yml", ler("docker-compose.yml"))
+    for k in ("deployment", "service", "ingress", "hpa"):
+        put(os.path.join("k8s", k + ".yaml"), ler(os.path.join("k8s", k + ".yaml")))
+    gw = os.path.join(h, "skills", "cidadela", "assets", "workflow-ci-gates.yml")
+    if os.path.isfile(gw):
+        put(".github/workflows/gates.yml", open(gw, encoding="utf-8").read())
+    put("Makefile", ler("Makefile"))
+    put("README.md", ler("README-projeto.md"))
+    adr = ("# ADR-0000 — Stack %s para %s\n\nStatus: Aceito · Data: %s\n\n"
+           "## Contexto\nProjeto novo criado com `genial init`.\n\n"
+           "## Decisão\nUsar %s com o baseline Genial Labs (Dockerfile, compose, k8s/, gates de CI).\n\n"
+           "## Alternativas consideradas\n| Alternativa | Por que não |\n|-------------|-------------|\n"
+           "| outra stack | sinais não medidos ainda (migracao-linguagem.md §1) |\n\n"
+           "## Consequências\n- Positivas: baseline seguro/testado, gates bloqueando regressão.\n"
+           "- Negativas: padrão da casa — desviar exige ADR próprio.\n\n"
+           "## Condição de reversibilidade\nSe ≥ 2 sinais objetivos de migracao-linguagem.md forem medidos, reabrir a decisão.\n"
+           % (stack, nome, hoje, stack))
+    put(os.path.join("docs", "adr", "ADR-0000-stack.md"), adr)
+    print()
+    print(OK("%d arquivo(s) criado(s)." % len(criados)))
+    print("Próximos passos:")
+    print('  1) cd %s && git init && git add -A && git commit -m "chore: scaffold genial labs"' % raiz)
+    print('  2) No Codex/Claude, diga: "cidadela: este projeto é novo — confirme a arquitetura de dados"')
+    print("  3) make run · make test · docker compose up")
+    print(CINZA("Documentos: ARCHITETURA-DADOS.md · docs/adr/ · k8s/ · .github/workflows/gates.yml"))
+    return 0
+
+
+def cmd_doctor(argv):
+    p = argparse.ArgumentParser(prog="genial doctor", description="Audita o projeto (Fase 0 da skill cidadela).")
+    p.add_argument("dir", nargs="?", default=".")
+    a = p.parse_args(argv)
+    h = home()
+    inv = os.path.join(h, "skills", "cidadela", "scripts", "inventario.py")
+    if not os.path.isfile(inv):
+        print(ERRO("Skill cidadela não encontrada (%s). Rode: %s" % (h, INSTALL_CMD)))
+        return 1
+    if not os.path.isdir(a.dir):
+        print(ERRO("Diretório não existe: %s" % a.dir))
+        return 1
+    print(BOLDO("Cidadela · Fase 0 (Acervo) em %s …\n" % a.dir))
+    r = subprocess.run([sys.executable, inv, a.dir])
+    print(CINZA("\nInterpretação das Fases 1–7: abra o projeto no Codex/Claude e chame 'cidadela'.\n"
+                "Referências: %s/skills/cidadela/references/" % h))
+    return r.returncode
+
+
+def cmd_skills(argv):
+    h = home()
+    locais = [
+        (os.path.expanduser("~/.agents/skills"), "usuário · Codex"),
+        (os.path.expanduser("~/.claude/skills"), "usuário · Claude Code"),
+        (os.path.join(os.getcwd(), ".agents/skills"), "repositório · Codex"),
+        (os.path.join(os.getcwd(), ".claude/skills"), "repositório · Claude Code"),
+        (os.path.join(h, "skills"), "pacote (fonte)"),
+    ]
+    achou = False
+    for base, rotulo in locais:
+        if not os.path.isdir(base):
+            continue
+        for nome in sorted(os.listdir(base)):
+            caminho = os.path.join(base, nome)
+            sk = os.path.join(caminho, "SKILL.md")
+            if not os.path.isfile(sk):
+                continue
+            nm, desc = "?", 0
+            for ln in open(sk, encoding="utf-8", errors="ignore").read(4000).splitlines():
+                if ln.startswith("name:"):
+                    nm = ln.split(":", 1)[1].strip()
+                if ln.startswith("description:"):
+                    desc = len(ln.split(":", 1)[1].strip())
+            ok = nm != "?" and desc > 50
+            print("%s %-12s %-26s (description %d chars) → %s" %
+                  (OK("[ok]") if ok else ERRO("[!!]"), nm, rotulo, desc, caminho))
+            achou = True
+    if not achou:
+        print(ERRO("Nenhuma skill instalada. Rode: " + INSTALL_CMD))
+        return 1
+    return 0
+
+
+def cmd_deploy(argv):
+    p = argparse.ArgumentParser(prog="genial deploy", description="Mostra o degrau de infraestrutura do projeto (0–5).")
+    p.add_argument("dir", nargs="?", default=".")
+    a = p.parse_args(argv)
+    raiz = a.dir
+    try:
+        itens = os.listdir(raiz)
+    except OSError:
+        print(ERRO("Diretório não existe: %s" % raiz))
+        return 1
+    tem_docker = any("dockerfile" in f.lower() for f in itens)
+    tem_compose = any("compose" in f.lower() and f.endswith((".yml", ".yaml")) for f in itens)
+    tem_ci = os.path.isdir(os.path.join(raiz, ".github", "workflows")) or os.path.exists(os.path.join(raiz, ".gitlab-ci.yml"))
+    tem_k8s = os.path.isdir(os.path.join(raiz, "k8s")) or any(
+        f.endswith((".yaml", ".yml")) and ("deployment" in f.lower() or "statefulset" in f.lower()) for f in itens)
+    tem_iac = any(f.endswith(".tf") for f in itens)
+    degrau = 0
+    if tem_docker:
+        degrau = max(degrau, 1)
+    if tem_compose:
+        degrau = max(degrau, 2)
+    if tem_ci:
+        degrau = max(degrau, 3)
+    if tem_k8s:
+        degrau = max(degrau, 4)
+    if tem_iac:
+        degrau = max(degrau, 5)
+    nomes = ["nada de infra ainda", "Dockerfile", "+ compose local", "+ gates no CI", "+ manifestos K8s", "+ IaC/cloud"]
+    print(BOLDO("Maturidade de infraestrutura: degrau %d/5 — %s" % (degrau, nomes[degrau])))
+    prox = {
+        0: "criar um Dockerfile (baseline non-root + healthcheck — cloud-deploy.md §2)",
+        1: "adicionar docker-compose.yml (paridade local app + db)",
+        2: "instalar gates no CI (.github/workflows/gates.yml — pronto em skills/cidadela/assets/)",
+        3: "manifestos K8s mínimos (templates/k8s/ do pacote)",
+        4: "Terraform + cloud real (cloud-deploy.md §6) — e drill de failover ANTES de precisar",
+        5: "escada completa: manter canary, rollback < 5 min e restore de backup exercitado",
+    }
+    print("Próximo passo: " + prox[degrau])
+    print(CINZA("Referência: %s/skills/cidadela/references/cloud-deploy.md" % home()))
+    return 0
+
+
+def cmd_update(argv):
+    h = home()
+    if os.path.isdir(os.path.join(h, ".git")) and shutil.which("git"):
+        print("Atualizando %s via git pull…" % h)
+        return subprocess.run(["git", "-C", h, "pull", "--ff-only"]).returncode
+    print(ERRO("Pacote sem histórico git (instalado via zip). Para atualizar, rode de novo:"))
+    print("  " + INSTALL_CMD)
+    return 0
+
+
+def cmd_uninstall(argv):
+    p = argparse.ArgumentParser(prog="genial uninstall", description="Remove tudo que o instalador colocou.")
+    p.add_argument("-y", action="store_true", help="não perguntar")
+    a = p.parse_args(argv)
+    H = os.path.expanduser("~")
+    alvos = [H + "/.genial-labs", H + "/.local/bin/genial",
+             H + "/.agents/skills/cidadela", H + "/.claude/skills/cidadela"]
+    existentes = [x for x in alvos if os.path.exists(x)]
+    if not existentes:
+        print("Nada instalado (ou já removido).")
+        return 0
+    for x in existentes:
+        print("Remover: %s" % x)
+    if not a.y and sys.stdin.isatty():
+        r = input("Confirmar? [s/N] ").strip().lower()
+        if r not in ("s", "sim", "y", "yes"):
+            print("Cancelado.")
+            return 0
+    for x in existentes:
+        if os.path.isdir(x) and not os.path.islink(x):
+            shutil.rmtree(x)
+        else:
+            os.remove(x)
+        print("  removido: %s" % x)
+    print(OK("Genial Labs removido."))
+    return 0
+
+
+def main(argv=None):
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if not argv or argv[0] in ("-h", "--help", "help"):
+        banner()
+        print(__doc__)
+        return 0
+    cmd, resto = argv[0], argv[1:]
+    funcs = {"banner": lambda r: (banner(), 0)[1],
+             "init": cmd_init, "doctor": cmd_doctor, "skills": cmd_skills,
+             "deploy": cmd_deploy, "update": cmd_update, "uninstall": cmd_uninstall}
+    if cmd not in funcs:
+        print(ERRO("comando desconhecido: %s" % cmd))
+        print(__doc__)
+        return 2
+    r = funcs[cmd](resto)
+    return 0 if r is None else r
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Cidadela"
+  short_description: "Auditoria + cirurgia + blindagem: arquitetura, dados, segurança ofensiva/defensiva, CI/CD e cloud (Docker/K8s/VPS/AWS) — caça a vazamento incluída"
+  default_prompt: "Cidadela: audite este repositório de ponta a ponta — diagnóstico de arquitetura e dados, reversão de legado se preciso, caça a vazamento, ofensiva red-team, gates de CI/CD e plano de deploy, sem quebrar produção."
+policy:
+  allow_implicit_invocation: true

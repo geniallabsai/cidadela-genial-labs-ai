@@ -1,0 +1,12 @@
+.git
+.venv
+__pycache__
+node_modules
+coverage
+.pytest_cache
+*.log
+.env
+.env.*
+!.env.example
+k8s
+.github
