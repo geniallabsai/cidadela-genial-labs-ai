@@ -19,7 +19,7 @@ import shutil
 import subprocess
 import sys
 
-VERSAO = "1.0.2"
+VERSAO = "1.0.3"
 REPO_GIT = "https://github.com/geniallabsai/genial-labs.git"
 INSTALL_CMD = "curl -fsSL https://raw.githubusercontent.com/geniallabsai/genial-labs/main/install.sh | bash"
 

@@ -143,6 +143,7 @@ python3 ≥ 3.7 (stdlib) · git/curl opcionais · para os projetos: a toolchain 
 
 ## Changelog
 
+- **v1.0.3** (2026-09-21): `install.ps1` exercitado de ponta a ponta em teste automatizado (PowerShell 7 instalado no ambiente e o instalador completo executado: download, instalação, skill, wrapper `genial.cmd`, verificação, self-test e desinstalação). Guards portáveis: PATH do usuário só é alterado no Windows, o wrapper é validado via `cmd.exe` quando disponível — comportamento no Windows idêntico, agora validado.
 - **v1.0.2** (2026-09-21): **Windows de primeira classe** — instalador PowerShell nativo
   (`install.ps1`/`uninstall.ps1`, PATH do usuário, wrapper `.cmd` que resolve `py`/`python`),
   instalador bash endurecido para Git Bash (wrapper POSIX com Python explícito, normalização

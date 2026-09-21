@@ -9,8 +9,12 @@ try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 
 $RepoUrl = "https://github.com/geniallabsai/genial-labs.git"
 $ZipUrl  = "https://codeload.github.com/geniallabsai/genial-labs/zip/refs/heads/main"
-$PkgDir  = Join-Path $env:USERPROFILE ".genial-labs"
-$BinDir  = Join-Path $env:LOCALAPPDATA "GenialLabs\bin"
+$IsWinOS = ($env:OS -eq "Windows_NT")
+if (-not $env:USERPROFILE)  { $env:USERPROFILE  = $env:HOME }
+if (-not $env:LOCALAPPDATA) { $env:LOCALAPPDATA = [System.IO.Path]::Combine($env:HOME, ".local", "share") }
+if (-not $env:TEMP)         { $env:TEMP         = "/tmp" }
+$PkgDir = Join-Path $env:USERPROFILE ".genial-labs"
+$BinDir = [System.IO.Path]::Combine($env:LOCALAPPDATA, "GenialLabs", "bin")
 
 function Write-Banner {
     $art = @(
@@ -62,34 +66,36 @@ try {
         Expand-Archive -LiteralPath $zip -DestinationPath $x
         Get-ChildItem $x -Directory | Select-Object -First 1 | Move-Item -Destination (Join-Path $tmp "pacote")
     }
-    if (-not (Test-Path (Join-Path $tmp "pacote\genial"))) { throw "pacote incompleto apos o download." }
+    if (-not (Test-Path ([System.IO.Path]::Combine($tmp, "pacote", "genial")))) { throw "pacote incompleto apos o download." }
 
     Write-Host "[2/4] instalando em ~\.genial-labs ..." -ForegroundColor White
     if (Test-Path $PkgDir) { Remove-Item -Recurse -Force $PkgDir }
     Copy-Item -Recurse (Join-Path $tmp "pacote") $PkgDir
 
     Write-Host "[3/4] instalando a skill cidadela (Codex + Claude Code)..." -ForegroundColor White
-    $bases = @((Join-Path $env:USERPROFILE ".agents\skills"), (Join-Path $env:USERPROFILE ".claude\skills"))
+    $bases = @(
+      [System.IO.Path]::Combine($env:USERPROFILE, ".agents", "skills"),
+      [System.IO.Path]::Combine($env:USERPROFILE, ".claude", "skills"))
     foreach ($base in $bases) {
         New-Item -ItemType Directory -Path $base -Force | Out-Null
         $dest = Join-Path $base "cidadela"
         if (Test-Path $dest) { Remove-Item -Recurse -Force $dest }
-        Copy-Item -Recurse (Join-Path $PkgDir "skills\cidadela") $dest
+        Copy-Item -Recurse ([System.IO.Path]::Combine($PkgDir, "skills", "cidadela")) $dest
     }
     if ($Repo) {
-        foreach ($rel in @(".agents\skills",".claude\skills")) {
-            $base = Join-Path (Get-Location) $rel
+        foreach ($rel in @(@(".agents","skills"), @(".claude","skills"))) {
+            $base = [System.IO.Path]::Combine((Get-Location).Path, $rel[0], $rel[1])
             New-Item -ItemType Directory -Path $base -Force | Out-Null
             $dest = Join-Path $base "cidadela"
             if (Test-Path $dest) { Remove-Item -Recurse -Force $dest }
-            Copy-Item -Recurse (Join-Path $PkgDir "skills\cidadela") $dest
+            Copy-Item -Recurse ([System.IO.Path]::Combine($PkgDir, "skills", "cidadela")) $dest
         }
         Write-Host "  + skill instalada tambem neste repositorio (.agents/skills e .claude/skills)." -ForegroundColor DarkGray
     }
 
-    Write-Host "[4/4] instalando o comando 'genial' (wrapper no PATH do usuario)..." -ForegroundColor White
+    Write-Host "[4/4] instalando o comando 'genial' (wrapper no PATH)..." -ForegroundColor White
     New-Item -ItemType Directory -Path $BinDir -Force | Out-Null
-    $prog = Join-Path $PkgDir "genial"
+    $prog = [System.IO.Path]::Combine($PkgDir, "genial")
     $shimBody = @"
 @echo off
 rem Genial Labs - wrapper gerado pelo instalador (Windows)
@@ -102,29 +108,47 @@ if not defined PYCMD ( echo Genial Labs: Python nao encontrado no PATH. Instale 
 %PYCMD% "$prog" %*
 "@
     Set-Content -Path (Join-Path $BinDir "genial.cmd") -Value $shimBody -Encoding ASCII
-    $userPath = [Environment]::GetEnvironmentVariable("Path","User")
-    if ($userPath -notlike "*$BinDir*") {
-        $newPath = $userPath
-        if ($newPath -and -not $newPath.EndsWith(";")) { $newPath = $newPath + ";" }
-        [Environment]::SetEnvironmentVariable("Path", ($newPath + $BinDir), "User")
-        Write-Host "  + $BinDir adicionado ao PATH do usuario." -ForegroundColor DarkGray
+    if ($IsWinOS) {
+        $userPath = [Environment]::GetEnvironmentVariable("Path","User")
+        $hasBin = @($userPath -split ';' | Where-Object { $_ }) -contains $BinDir
+        if (-not $hasBin) {
+            $newPath = (($userPath -or '').TrimEnd(';'))
+            if ($newPath) { $newPath = $newPath + ';' + $BinDir } else { $newPath = $BinDir }
+            [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
+            Write-Host "  + $BinDir adicionado ao PATH do usuario." -ForegroundColor DarkGray
+        }
+    } else {
+        Write-Host "  (ambiente nao-Windows: PATH do usuario nao alterado)" -ForegroundColor DarkGray
     }
     $env:Path = "$env:Path;$BinDir"
 
     # ----- verificacao -----
-    $ok = $true
+    $fail = ""
     if ($PyInfo) {
-        $argsVerify = @($PyInfo.args) + @($prog, "banner")
-        & $PyInfo.exe $argsVerify | Out-Null
-        if ($LASTEXITCODE -ne 0) { $ok = $false }
+        $aVerify = @($PyInfo.args); $aVerify += $prog; $aVerify += "banner"
+        & $PyInfo.exe @aVerify | Out-Null
+        if ($LASTEXITCODE -ne 0) { $fail = "o programa principal nao respondeu." }
+    } else {
+        $fail = "Python nao encontrado no PATH."
     }
     $shim = Join-Path $BinDir "genial.cmd"
-    & cmd.exe /c "call `"$shim`" banner" | Out-Null
-    if ($LASTEXITCODE -ne 0) { $ok = $false }
-    if (-not $ok) { throw "verificacao do comando 'genial' falhou." }
-    $selftest = Join-Path $tmp "selftest"
-    & cmd.exe /c "call `"$shim`" init `"$selftest`" --stack py" | Out-Null
-    if (-not (Test-Path (Join-Path $selftest "ARCHITETURA-DADOS.md"))) { throw "self-test 'genial init' incompleto." }
+    $cmdExe = Get-Command cmd.exe -ErrorAction SilentlyContinue
+    if (-not $fail -and $cmdExe) {
+        & cmd.exe /c "call `"$shim`" banner" | Out-Null
+        if ($LASTEXITCODE -ne 0) { $fail = "o wrapper genial.cmd nao executou." }
+    }
+    if ($fail) { Write-Host "erro: $fail" -ForegroundColor Red; exit 1 }
+
+    $selftest = [System.IO.Path]::Combine($tmp, "selftest")
+    if ($cmdExe) {
+        & cmd.exe /c "call `"$shim`" init `"$selftest`" --stack py" | Out-Null
+    } else {
+        $aS = @($PyInfo.args); $aS += $prog; $aS += "init"; $aS += $selftest; $aS += "--stack"; $aS += "py"
+        & $PyInfo.exe @aS | Out-Null
+    }
+    if (-not (Test-Path ([System.IO.Path]::Combine($selftest, "ARCHITETURA-DADOS.md")))) {
+        Write-Host "erro: self-test 'genial init' incompleto." -ForegroundColor Red; exit 1
+    }
 
     $done = $true
     Write-Host ""
@@ -135,7 +159,11 @@ if not defined PYCMD ( echo Genial Labs: Python nao encontrado no PATH. Instale 
     Write-Host "   • comando 'genial': init · doctor · deploy · skills"
     Write-Host "   • templates de Arquitetura de Dados + Docker/Compose/K8s + gates de CI"
     Write-Host ""
-    Write-Host "  IMPORTANTE: abra um NOVO terminal para o PATH valer, e então:" -ForegroundColor DarkCyan
+    if ($IsWinOS) {
+        Write-Host "  IMPORTANTE: abra um NOVO terminal para o PATH valer, e então:" -ForegroundColor DarkCyan
+    } else {
+        Write-Host "  Próximos passos:" -ForegroundColor DarkCyan
+    }
     Write-Host "   genial init meu-projeto --stack py     novo projeto guiado"
     Write-Host "   genial doctor                          auditar projeto existente"
     Write-Host "   genial deploy                          degrau na escada VPS->Docker->K8s->AWS"
