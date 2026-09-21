@@ -22,13 +22,13 @@ Do zero ao primeiro projeto guiado em menos de 5 minutos.
 Abra o PowerShell (não precisa de administrador):
 
 ```powershell
-irm https://raw.githubusercontent.com/brunao23/genial-labs/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/geniallabsai/genial-labs/main/install.ps1 | iex
 ```
 
 Se a política da sua máquina bloquear `iex`:
 
 ```powershell
-iwr https://raw.githubusercontent.com/brunao23/genial-labs/main/install.ps1 -OutFile $env:TEMP\ig.ps1
+iwr https://raw.githubusercontent.com/geniallabsai/genial-labs/main/install.ps1 -OutFile $env:TEMP\ig.ps1
 powershell -ExecutionPolicy Bypass -File $env:TEMP\ig.ps1
 ```
 
@@ -37,7 +37,7 @@ O instalador adiciona o comando ao **PATH do seu usuário** — **abra um novo t
 ### Linux / macOS / WSL2 / Git Bash (Windows)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/brunao23/genial-labs/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/geniallabsai/genial-labs/main/install.sh | bash
 ```
 
 No terminal aparece o bloco **GENIAL LABS** em azul tech e o instalador faz 4 passos:

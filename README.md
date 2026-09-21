@@ -27,7 +27,7 @@ iniciação rápida ao modelo de token, escritas para virarem o site oficial.
 ### 🪟 Windows — PowerShell nativo (recomendado)
 
 ```powershell
-irm https://raw.githubusercontent.com/brunao23/genial-labs/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/geniallabsai/genial-labs/main/install.ps1 | iex
 ```
 
 - PowerShell 5.1+ (vem com o Windows 10/11); sem necessidade de administrador
@@ -39,7 +39,7 @@ irm https://raw.githubusercontent.com/brunao23/genial-labs/main/install.ps1 | ie
 ### Linux / macOS / WSL2 / Git Bash
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/brunao23/genial-labs/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/geniallabsai/genial-labs/main/install.sh | bash
 ```
 
 Requisitos das duas rotas: **Python 3.7+** no PATH (apenas stdlib, sem `pip install`). No
@@ -116,7 +116,7 @@ Referência completa (flags, exemplos, códigos de saída): [`docs/comandos-geni
 | 7 Plataforma | escada VPS/Docker/K8s/AWS + deploy zero-downtime + IA no produto |
 
 Guia completo: [`docs/skill-cidadela.md`](docs/skill-cidadela.md). A mesma skill existe no
-repositório dedicado [cidadela.skill](https://github.com/brunao23/cidadela.skill) (conteúdo
+repositório dedicado [cidadela.skill](https://github.com/geniallabsai/cidadela.skill) (conteúdo
 idêntico, sincronizado).
 
 ## Estrutura do pacote

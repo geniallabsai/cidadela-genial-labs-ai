@@ -1,5 +1,5 @@
 ﻿# Genial Labs - instalador nativo para WINDOWS (PowerShell 5.1+, Win10/Win11)
-# Uso:   irm https://raw.githubusercontent.com/brunao23/genial-labs/main/install.ps1 | iex
+# Uso:   irm https://raw.githubusercontent.com/geniallabsai/genial-labs/main/install.ps1 | iex
 # Ou:    iwr ... -OutFile $env:TEMP\ig.ps1; powershell -ExecutionPolicy Bypass -File $env:TEMP\ig.ps1
 # Flag:  -Repo  instala a skill tambem nas pastas do repositorio atual (time inteiro)
 param([switch]$Repo)
@@ -7,8 +7,8 @@ param([switch]$Repo)
 $ErrorActionPreference = "Stop"
 try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 
-$RepoUrl = "https://github.com/brunao23/genial-labs.git"
-$ZipUrl  = "https://codeload.github.com/brunao23/genial-labs/zip/refs/heads/main"
+$RepoUrl = "https://github.com/geniallabsai/genial-labs.git"
+$ZipUrl  = "https://codeload.github.com/geniallabsai/genial-labs/zip/refs/heads/main"
 $PkgDir  = Join-Path $env:USERPROFILE ".genial-labs"
 $BinDir  = Join-Path $env:LOCALAPPDATA "GenialLabs\bin"
 

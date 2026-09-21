@@ -2,8 +2,8 @@
 # Genial Labs — instalador de terminal (Linux/macOS/WSL/Git Bash; bash 3.2+)
 set -euo pipefail
 
-REPO_GIT="https://github.com/brunao23/genial-labs.git"
-ZIP_URL="https://codeload.github.com/brunao23/genial-labs/zip/refs/heads/main"
+REPO_GIT="https://github.com/geniallabsai/genial-labs.git"
+ZIP_URL="https://codeload.github.com/geniallabsai/genial-labs/zip/refs/heads/main"
 
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
   C() { printf '\033[%sm%s\033[0m\n' "$1" "$2"; }

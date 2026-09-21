@@ -22,7 +22,7 @@ Em qualquer linguagem. Feita para quem não é engenheiro de software e precisa 
 
 ```bash
 # 1. Instalar (Linux/macOS; Python 3.7+ apenas stdlib)
-curl -fsSL https://raw.githubusercontent.com/brunao23/genial-labs/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/geniallabsai/genial-labs/main/install.sh | bash
 
 # 2. Criar um projeto novo já guiado (escolha seu stack)
 genial init meu-app --stack py      # py | node | go | auto
@@ -57,4 +57,4 @@ Depois é abrir o projeto no Codex ou Claude Code e falar: **"cidadela: audite e
 - **v1.0.1 — beta público.** A instalação está **aberta** para a comunidade (sem cadastro).
 - Com o lançamento do **site oficial**, a instalação passa a ser feita com **token pessoal**:
   cada pessoa se cadastra e recebe a chave própria (ver [Acesso e token](acesso-e-token.md)).
-- Suporte e sugestões: abra uma issue no repositório `brunao23/genial-labs`.
+- Suporte e sugestões: abra uma issue no repositório `geniallabsai/genial-labs`.

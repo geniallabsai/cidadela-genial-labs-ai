@@ -17,7 +17,7 @@ caminho de suporte real.
 ## Instalação com token (forma oficial)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/brunao23/genial-labs/main/install.sh | bash -s -- --token SEU_TOKEN_AQUI
+curl -fsSL https://raw.githubusercontent.com/geniallabsai/genial-labs/main/install.sh | bash -s -- --token SEU_TOKEN_AQUI
 ```
 
 Token inválido ou expirado ⇒ mensagem clara no terminal com o link para regenerar no site.

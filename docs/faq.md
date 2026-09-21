@@ -2,7 +2,7 @@
 
 **Funciona no Windows?**
 Sim — e agora com **rota nativa**: instale pelo PowerShell com
-`irm https://raw.githubusercontent.com/brunao23/genial-labs/main/install.ps1 | iex`
+`irm https://raw.githubusercontent.com/geniallabsai/genial-labs/main/install.ps1 | iex`
 (ou `iwr` + `-ExecutionPolicy Bypass` se o `iex` estiver bloqueado). Quem usa **Git Bash** ou
 **WSL2** mantém a linha clássica `curl … | bash` — o instalador foi endurecido para esse cenário
 (wrapper que chama o Python explicitamente, clone com `autocrlf=false`). Só precisa do Python 3.7+
@@ -75,6 +75,6 @@ do modificado, imagem, CODEOWNERS) equivalem direto em GitLab CI, CircleCI ou Je
 protocolo está em `references/ci-cd.md`.
 
 **Onde reporto bug?**
-Issue em `brunao23/genial-labs` com: comando executado, SO (e rota de instalação: PowerShell /
+Issue em `geniallabsai/genial-labs` com: comando executado, SO (e rota de instalação: PowerShell /
 Git Bash / WSL / Linux / macOS), versão do Python, saída completa (com `NO_COLOR=1` ajuda) e a
 área suspeita (CLI / skill / templates / instalador).

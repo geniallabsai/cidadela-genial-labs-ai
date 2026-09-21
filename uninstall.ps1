@@ -1,5 +1,5 @@
 ﻿# Genial Labs - desinstalador (Windows)
-# Uso: iwr https://raw.githubusercontent.com/brunao23/genial-labs/main/uninstall.ps1 -OutFile $env:TEMP\u.ps1; powershell -ExecutionPolicy Bypass -File $env:TEMP\u.ps1 [-y]
+# Uso: iwr https://raw.githubusercontent.com/geniallabsai/genial-labs/main/uninstall.ps1 -OutFile $env:TEMP\u.ps1; powershell -ExecutionPolicy Bypass -File $env:TEMP\u.ps1 [-y]
 param([switch]$y)
 $targets = @(
   (Join-Path $env:USERPROFILE ".genial-labs"),

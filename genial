@@ -20,8 +20,8 @@ import subprocess
 import sys
 
 VERSAO = "1.0.2"
-REPO_GIT = "https://github.com/brunao23/genial-labs.git"
-INSTALL_CMD = "curl -fsSL https://raw.githubusercontent.com/brunao23/genial-labs/main/install.sh | bash"
+REPO_GIT = "https://github.com/geniallabsai/genial-labs.git"
+INSTALL_CMD = "curl -fsSL https://raw.githubusercontent.com/geniallabsai/genial-labs/main/install.sh | bash"
 
 
 def _cor(num):

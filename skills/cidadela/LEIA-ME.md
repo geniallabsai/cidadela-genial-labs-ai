@@ -13,7 +13,7 @@ só sabe zomba. A resposta não é tecla — é checklist executado, evidência 
 bloqueia merge.
 
 **Parte do pacote Genial Labs** (instalador terminal com CLI `genial`, templates de arquitetura de
-dados e infra): `curl -fsSL https://raw.githubusercontent.com/brunao23/genial-labs/main/install.sh | bash`
+dados e infra): `curl -fsSL https://raw.githubusercontent.com/geniallabsai/genial-labs/main/install.sh | bash`
 Instalada pelo pacote ou manualmente abaixo, o comportamento é o mesmo.
 
 ## Instalação no Codex
@@ -25,7 +25,7 @@ cp -r cidadela $HOME/.agents/skills/           # usuário (todos os projetos)
 cp -r cidadela /etc/codex/skills/              # máquina (opcional)
 ```
 
-Ou direto do GitHub: `$skill-installer install https://github.com/brunao23/cidadela.skill`
+Ou direto do GitHub: `$skill-installer install https://github.com/geniallabsai/cidadela.skill`
 
 Regras do Codex (docs oficiais, "Build skills"):
 - O scan parte da pasta de trabalho e sobe até a raiz do repositório; links simbólicos são aceitos.
