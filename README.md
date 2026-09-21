@@ -22,33 +22,46 @@ arquitetura de dados e de deploy.
 📖 **Documentação completa para a comunidade:** [`docs/`](docs/README.md) — 12 páginas, da
 iniciação rápida ao modelo de token, escritas para virarem o site oficial.
 
-## Instalação (uma linha no terminal)
+## Instalação
+
+### 🪟 Windows — PowerShell nativo (recomendado)
+
+```powershell
+irm https://raw.githubusercontent.com/brunao23/genial-labs/main/install.ps1 | iex
+```
+
+- PowerShell 5.1+ (vem com o Windows 10/11); sem necessidade de administrador
+- Se `iex` estiver bloqueado: `iwr … -OutFile $env:TEMP\ig.ps1` e
+  `powershell -ExecutionPolicy Bypass -File $env:TEMP\ig.ps1`
+- Adiciona `genial` ao **PATH do seu usuário** — abra um **novo terminal** depois
+- Remove depois, se quiser: `uninstall.ps1` (ou `genial uninstall -y`)
+
+### Linux / macOS / WSL2 / Git Bash
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/brunao23/genial-labs/main/install.sh | bash
 ```
 
-- Linux/macOS · bash + python3 ≥ 3.7 (só stdlib) · git/curl opcionais (há fallback zip+urllib) ·
-  Windows via WSL2
-- `--repo` também instala a skill nas pastas `.agents/skills` e `.claude/skills` do repositório
-  atual (para o time inteiro)
-- No final, o instalador mostra o bloco GENIAL LABS em azul tech e roda self-test (`genial init`
-  em diretório de teste)
+Requisitos das duas rotas: **Python 3.7+** no PATH (apenas stdlib, sem `pip install`). No
+Windows, marque *"Add python.exe to PATH"* no instalador do python.org.
 
-Remover: `genial uninstall -y` (ou `bash uninstall.sh`).
+- `--repo` (bash) / `-Repo` (PowerShell): instala a skill também nas pastas
+  `.agents/skills` + `.claude/skills` do repositório atual (time inteiro)
+- O instalador mostra o bloco GENIAL LABS em azul tech e roda self-test (`genial init` em
+  diretório de teste) antes de fechar
 
-> **Estado atual — beta público:** instalação aberta, sem cadastro. Com o lançamento do **site
-> oficial**, ela passará a usar **token pessoal** (`bash -s -- --token …` — cada pessoa que se
-> cadastra recebe a própria chave). Modelo completo em
-> [docs/acesso-e-token.md](docs/acesso-e-token.md) e [roadmap](docs/roadmap.md).
+> **Estado atual — beta público:** instalação aberta, sem cadastro. Com o lançamento do
+> **site oficial**, ela passará a usar **token pessoal** (`--token …` — cada pessoa que se
+> cadastra recebe a própria chave). Modelo em [docs/acesso-e-token.md](docs/acesso-e-token.md)
+> e [roadmap](docs/roadmap.md).
 
 ## O que ele instala
 
 | Onde | O quê |
 |------|-------|
-| `~/.genial-labs/` | pacote completo (skill, templates, docs) |
+| `~/.genial-labs/` (Windows: `%USERPROFILE%\.genial-labs`) | pacote completo (skill, templates, docs) |
 | `~/.agents/skills/cidadela` + `~/.claude/skills/cidadela` | a skill Cidadela (Codex **e** Claude Code) |
-| `~/.local/bin/genial` | o comando terminal |
+| `~/.local/bin/genial` (Unix) · `%LOCALAPPDATA%\GenialLabs\bin\genial.cmd` (Windows) | o comando terminal (wrapper que chama o Python explicitamente) |
 
 ## Como ele guia o projeto
 
@@ -110,7 +123,9 @@ idêntico, sincronizado).
 
 ```
 genial-labs/
-├── install.sh / uninstall.sh     # instalador de terminal (banner azul tech + self-test)
+├── install.sh / install.ps1      # instaladores (Unix/Git Bash · Windows nativo)
+├── uninstall.sh / uninstall.ps1
+├── .gitattributes                # força \n no checkout (clone Windows não corrói o CLI)
 ├── genial                        # CLI (python3 stdlib): init/doctor/skills/deploy/update/uninstall
 ├── docs/                         # documentação completa da comunidade (12 páginas, site-ready)
 ├── skills/cidadela/              # a skill (8 fases — idêntica à de cidadela.skill)
@@ -123,14 +138,18 @@ genial-labs/
 
 ## Licença e requisitos
 
-**MIT** (beta público). bash 3.2+ · python3 ≥ 3.7 (stdlib) · git/curl opcionais · para os
-projetos: a toolchain da stack escolhida.
+**MIT** (beta público). Windows 10/11 (PowerShell 5.1+) · Linux · macOS · bash 3.2+ (rota Unix) ·
+python3 ≥ 3.7 (stdlib) · git/curl opcionais · para os projetos: a toolchain da stack escolhida.
 
 ## Changelog
 
-- **v1.0.1** (2026-09-21): documentação completa da comunidade (12 páginas em `docs/`,
-  estrutura pronta para virar o site), licença MIT, modelo de **acesso por token** documentado
-  (chega com o site — beta segue aberto).
+- **v1.0.2** (2026-09-21): **Windows de primeira classe** — instalador PowerShell nativo
+  (`install.ps1`/`uninstall.ps1`, PATH do usuário, wrapper `.cmd` que resolve `py`/`python`),
+  instalador bash endurecido para Git Bash (wrapper POSIX com Python explícito, normalização
+  CRLF do CLI, clone com `autocrlf=false`, verificação em modo compat), `.gitattributes`.
+- **v1.0.1** (2026-09-21): documentação completa da comunidade (12 páginas em `docs/`, estrutura
+  pronta para virar o site), licença MIT, modelo de acesso por token documentado (chega com o
+  site — beta segue aberto).
 - **v1.0.0** (2026-09-21): primeiro pacote — skill Cidadela v3 (8 fases: + arquitetura de
   dados, reversão de legado, migração de linguagem e plataforma cloud), CLI `genial`,
   instalador com banner GENIAL LABS, templates de dados/infra, gates de CI.
