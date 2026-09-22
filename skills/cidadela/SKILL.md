@@ -78,6 +78,10 @@ cheiro de IA (§4: cada categoria > 0 do inventário exige o check de 60s) → s
 regra única. **P0 encontrado ⇒ parar:** corrigir antes de prosseguir. Saída: seção ofensiva do relatório.
 
 ## Fase 6 — Blindagem (defesa em camadas)
+0. **Mecânico primeiro**: `genial blinda <RAIZ>` (ou `python3 skills/cidadela/scripts/blindagem.py <RAIZ>`) aplica as
+correções determinísticas do veredito — idempotente, marcador `GENIAL-BLINDA` — devolve a auditoria
+ANTES→DEPOIS e a lista MANUAIS que esta fase decide. Camada visual do sistema: pacote `genial ui`
+(tokens, temas, a11y AA, responsivo — `docs/frontend.md` no pacote Genial Labs).
 1. **Caça a vazamentos**: `references/vazamento-dados.md` — os 12 canais (status limpo/achado/não avaliado), testes negativos no CI, máscaras de PII brasileiras, entradas LGPD/jurídico.
 2. **Punch-list defensiva**: `references/blindagem-seguranca.md` (camadas S/D/A/I/C/B/F/O/P + V + X) com status atual, evidência, alvo, prioridade P0/P1/P2, esforço; multi-tenant acrescenta §8 de `references/multitenancy.md`.
 3. **STRIDE curto** por superfície pública.

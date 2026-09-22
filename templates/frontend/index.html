@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Genial Labs · Painel</title>
+  <meta name="description" content="Painel de referência do frontend enterprise Genial Labs: tokens de design, temas claro/escuro, acessibilidade WCAG 2.1 AA e responsividade mobile-first.">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f8fafc">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#020617">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+
+  <header class="nav nao-imprimir">
+    <div class="container nav__linha">
+      <span class="nav__marca"><span aria-hidden="true">GL</span> Genial Labs</span>
+      <button id="btn-menu" class="nav__btn-menu" type="button" aria-expanded="false" aria-controls="menu" aria-label="Abrir menu"><span></span></button>
+      <nav aria-label="Principal">
+        <ul id="menu" class="nav__lista">
+          <li><a href="#visao">Visão geral</a></li>
+          <li><a href="#componentes">Componentes</a></li>
+          <li><a href="#tabela">Dados</a></li>
+          <li><a href="#formulario">Formulário</a></li>
+          <li><a href="#status">Status</a></li>
+        </ul>
+      </nav>
+      <div class="nav__acoes">
+        <button id="trocar-tema" class="btn-icone" type="button" aria-label="Alternar tema">◐</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="conteudo" class="container">
+    <section class="hero" aria-labelledby="titulo-hero">
+      <h1 id="titulo-hero">Um painel que sobrevive à produção</h1>
+      <p class="lead">Frontend enterprise zero-dependências: tokens de design, temas claro e escuro, acessibilidade WCAG 2.1 AA e responsividade mobile-first — sem framework, sem build, pronto para servir.</p>
+      <p class="acoes">
+        <a class="botao" href="#componentes">Explorar componentes</a>
+        <a class="botao secundario" href="#status">Ver status da API</a>
+      </p>
+      <p class="badges">
+        <span class="badge sucesso">WCAG 2.1 AA</span>
+        <span class="badge info">Responsivo</span>
+        <span class="badge neutro">Zero dependências</span>
+      </p>
+    </section>
+
+    <section id="visao" class="secao" aria-labelledby="titulo-visao">
+      <h2 id="titulo-visao">Por que este padrão</h2>
+      <p>Tudo que um produto enterprise exige na camada visual — consistência, contraste, foco visível e comportamento previsível no celular — fica centralizado em tokens. Mude uma variável e o sistema inteiro acompanha.</p>
+      <div class="grade-cartoes">
+        <article class="cartao">
+          <p class="icone-cartao" aria-hidden="true"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.6-3 8.6-7 10-4-1.4-7-5.4-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg></p>
+          <h3>Acessibilidade é requisito</h3>
+          <p>Skip-link, landmarks ARIA, foco visível em tudo, alvos de toque de 44 px ou mais e respeito a <code>prefers-reduced-motion</code>.</p>
+        </article>
+        <article class="cartao">
+          <p class="icone-cartao" aria-hidden="true"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 13l3.5-3.5"/><path d="M5 21h14"/></svg></p>
+          <h3>Rápido por construção</h3>
+          <p>Três folhas de CSS e um JavaScript pequeno, sem bundle. O navegador faz o resto — e o usuário percebe.</p>
+        </article>
+        <article class="cartao">
+          <p class="icone-cartao" aria-hidden="true"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg></p>
+          <h3>Consistência por tokens</h3>
+          <p>Espaço em grid de 8 pt, escala tipográfica fluida e cores semânticas com contraste AA nos dois temas.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="componentes" class="secao" aria-labelledby="titulo-comp">
+      <h2 id="titulo-comp">Componentes</h2>
+      <div class="grade-cartoes">
+        <article class="cartao">
+          <h3>Botões</h3>
+          <p class="demo-botoes">
+            <button class="botao" type="button">Primário</button>
+            <button class="botao secundario" type="button">Secundário</button>
+            <button class="botao fantasma" type="button">Fantasma</button>
+            <button class="botao perigo" type="button">Perigo</button>
+            <button class="botao" type="button" disabled>Desativado</button>
+          </p>
+          <h3>Estados e feedback</h3>
+          <p><span class="badge sucesso">Operacional</span> <span class="badge aviso">Degradado</span> <span class="badge perigo">Indisponível</span> <span class="badge neutro">Manutenção</span></p>
+          <div class="alerta info" role="note"><div><strong>Informativo</strong>Alertas usam cor semântica com fundo suave — legíveis nos dois temas.</div></div>
+          <div class="alerta sucesso" role="note"><div><strong>Concluído</strong>Feedback positivo com verbo claro, sem ambiguidade.</div></div>
+          <div class="esqueleto linha" aria-hidden="true"></div>
+        </article>
+        <article class="cartao">
+          <h3>Regras visíveis do sistema</h3>
+          <p>Botões nunca somem: estados desativado e carregando continuam visíveis. Erros aparecem ao lado do campo que os causou, com a mensagem ligada por <code>aria-describedby</code>.</p>
+          <p>Navegação inteira alcançável por teclado, com foco sempre visível. No celular, o menu fecha com <kbd>Esc</kbd> ou toque fora — sem armadilha.</p>
+          <p>Quem prefere menos movimento recebe menos movimento: todo efeito respeita a preferência do sistema operacional.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="tabela" class="secao" aria-labelledby="titulo-tabela">
+      <h2 id="titulo-tabela">Dados</h2>
+      <div class="tabela-wrap">
+        <table class="tabela-resp">
+          <caption>Instâncias em produção (exemplo)</caption>
+          <thead>
+            <tr><th scope="col">Serviço</th><th scope="col">Ambiente</th><th scope="col">Uptime</th><th scope="col">Estado</th></tr>
+          </thead>
+          <tbody>
+            <tr><td data-chave="Serviço">api-publica</td><td data-chave="Ambiente">produção</td><td data-chave="Uptime">99,98%</td><td data-chave="Estado"><span class="badge sucesso">operacional</span></td></tr>
+            <tr><td data-chave="Serviço">worker-pagamentos</td><td data-chave="Ambiente">produção</td><td data-chave="Uptime">99,91%</td><td data-chave="Estado"><span class="badge sucesso">operacional</span></td></tr>
+            <tr><td data-chave="Serviço">relatorios</td><td data-chave="Ambiente">staging</td><td data-chave="Uptime">97,40%</td><td data-chave="Estado"><span class="badge aviso">degradado</span></td></tr>
+            <tr><td data-chave="Serviço">legacy-crm</td><td data-chave="Ambiente">produção</td><td data-chave="Uptime">—</td><td data-chave="Estado"><span class="badge perigo">indisponível</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="formulario" class="secao" aria-labelledby="titulo-form">
+      <h2 id="titulo-form">Formulário</h2>
+      <div class="cartao">
+        <form id="form-demo" novalidate>
+          <div class="campo" id="campo-email">
+            <label for="email">E-mail corporativo</label>
+            <input type="email" id="email" name="email" autocomplete="email" placeholder="voce@empresa.com.br" required aria-describedby="erro-email">
+            <p class="erro-msg" id="erro-email">Informe um e-mail válido.</p>
+            <p class="dica">Usamos apenas para contatos sobre este projeto.</p>
+          </div>
+          <div class="campo" id="campo-termo">
+            <label class="linha-termo" for="termo"><input type="checkbox" id="termo" name="termo"> Li e aceito os termos de uso.</label>
+            <p class="erro-msg">É necessário aceitar os termos.</p>
+          </div>
+          <button type="submit" class="botao">Enviar</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="status" class="secao" aria-labelledby="titulo-status">
+      <h2 id="titulo-status">Status do sistema</h2>
+      <div class="cartao">
+        <p>O painel verifica o <code>/healthz</code> da sua API — o mesmo contrato que os templates Genial Labs, o Dockerfile e o docker-compose gerados pela blindagem expõem.</p>
+        <p><span id="badge-status" class="badge neutro" role="status">verificando…</span>
+        <button id="verificar-status" class="botao secundario" type="button">Verificar agora</button></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="rodape nao-imprimir">
+    <div class="container">
+      <p>Genial Labs · frontend enterprise de referência — tokens, temas, acessibilidade AA e responsivo, sem dependências externas.</p>
+    </div>
+  </footer>
+
+  <div class="toast-regiao" role="status" aria-live="polite"></div>
+  <script src="js/app.js" defer></script>
+</body>
+</html>

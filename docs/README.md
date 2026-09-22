@@ -12,9 +12,9 @@ profissional. Uma linha no terminal instala:
 - a skill **Cidadela** — o cérebro: audita a arquitetura (monolito × micro × dados), decide o melhor
   destino, ataca o sistema antes do atacante, blinda em camadas e planeja o deploy — tudo com
   evidência `arquivo:linha` e mudança reversível;
-- o comando **`genial`** — scaffold guiado por arquitetura de dados, auditoria no terminal, escada
-  de infraestrutura (VPS → Docker → K8s → AWS);
-- **templates** — Arquitetura de Dados, Dockerfiles, Compose, Kubernetes e gates de CI.
+- o comando **`genial`** — scaffold guiado por arquitetura de dados, auditoria com veredito e
+  blindagem automática, frontend enterprise e escada de infraestrutura (VPS → Docker → K8s → AWS);
+- **templates** — Arquitetura de Dados, Dockerfiles, Compose, Kubernetes, gates de CI e frontend enterprise.
 
 Em qualquer linguagem. Feita para quem não é engenheiro de software e precisa entregar como um.
 
@@ -47,6 +47,7 @@ Depois é abrir o projeto no Codex ou Claude Code e falar: **"cidadela: audite e
 | [Segurança ofensiva e defensiva](seguranca-ofensiva-defensiva.md) | A primeira hora do atacante, os 12 canais de vazamento, PII brasileira, gates de CI |
 | [Plataforma e cloud](plataforma-e-cloud.md) | A escada VPS→Docker→K8s→AWS, deploy zero-downtime e IA no produto |
 | [Arquiteturas prontas](arquiteturas.md) | Guia de decisão: serverless (Vercel/Lambda/Workers), microserviços e SaaS multi-tenant — com packs copiáveis |
+| [Frontend enterprise](frontend.md) | Tokens, temas claro/escuro, acessibilidade WCAG 2.1 AA, responsivo mobile-first — e quando NÃO usar o vanilla pack |
 | [Legado e migração](legado-e-migracao.md) | Reverter engenharia em código antigo e migrar de linguagem sem parar o sistema |
 | [Acesso e token](acesso-e-token.md) | O modelo de registro + token pessoal (com o site oficial) — e o estado atual do beta |
 | [FAQ](faq.md) | Windows? Atualização? Seguros? Licença? Tudo que perguntam primeiro |
@@ -55,9 +56,10 @@ Depois é abrir o projeto no Codex ou Claude Code e falar: **"cidadela: audite e
 
 ## Estado atual
 
-- **v1.2.0 — beta público.** A auditoria (`genial doctor`) agora fecha com **veredito por componente**
-  (MANTER/BLINDAR/MIGRAR/OBSERVAR) sobre arquitetura, linguagem, backend, banco de dados e segurança.
-- Anterior: v1.1.0 (arquiteturas prontas `genial arq`). A instalação está **aberta** para a comunidade (sem cadastro).
+- **v1.3.0 — beta público.** `genial blinda` aplica as correções mecânicas do veredito (idempotente,
+  marcador `GENIAL-BLINDA`, auditoria ANTES→DEPOIS por componente) e `genial ui` entrega o frontend
+  enterprise zero-dependência (tokens, temas claro/escuro, acessibilidade AA, responsivo mobile-first).
+- Anterior: v1.2.0 (veredito por componente na auditoria). A instalação está **aberta** para a comunidade (sem cadastro).
 - Com o lançamento do **site oficial**, a instalação passa a ser feita com **token pessoal**:
   cada pessoa se cadastra e recebe a chave própria (ver [Acesso e token](acesso-e-token.md)).
 - Suporte e sugestões: abra uma issue no repositório `geniallabsai/genial-labs`.

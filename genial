@@ -7,9 +7,11 @@ Comandos:
   genial banner        arte GENIAL LABS (azul tech)
   genial init [DIR]    projeto novo: arquitetura de dados + skeleton + Docker/compose/k8s + gates CI
   genial doctor        auditoria: stack, riscos e veredito MANTER/BLINDAR/MIGRAR (Fase 0 da cidadela)
+  genial blinda        auditoria + correções mecânicas do veredito (idempotente, marcador GENIAL-BLINDA)
   genial skills        lista skills instaladas (Codex / Claude Code)
   genial deploy        degrau atual de infraestrutura (0–5) + próximo passo
   genial arq           arquiteturas prontas (serverless · microserviços · SaaS): lista/copia
+  genial ui            frontend enterprise zero-dependência: lista/copia o pacote de referência
   genial update        atualiza o pacote
   genial uninstall     remove tudo que o instalador colocou
 """
@@ -31,7 +33,7 @@ if os.name == "nt":
         except Exception:
             pass
 
-VERSAO = "1.2.0"
+VERSAO = "1.3.0"
 REPO_GIT = "https://github.com/geniallabsai/genial-labs.git"
 INSTALL_CMD = "curl -fsSL https://raw.githubusercontent.com/geniallabsai/genial-labs/main/install.sh | bash"
 
@@ -70,7 +72,7 @@ def banner():
     for linha in arte():
         print(AZUL(linha))
     print(AZUL("    Genial Labs · arquitetura + dados + segurança + infra que guia seu código"))
-    print(CINZA("    v%s · comandos: init | doctor | skills | deploy | arq | update | uninstall" % VERSAO))
+    print(CINZA("    v%s · comandos: init | doctor | blinda | skills | deploy | arq | ui | update | uninstall" % VERSAO))
 
 
 def home():
@@ -199,6 +201,26 @@ def cmd_doctor(argv):
     r = subprocess.run([sys.executable, inv, a.dir])
     print(CINZA("\nInterpretação das Fases 1–7: abra o projeto no Codex/Claude e chame 'cidadela'.\n"
                 "Referências: %s/skills/cidadela/references/" % h))
+    return r.returncode
+
+
+def cmd_blinda(argv):
+    p = argparse.ArgumentParser(prog="genial blinda",
+                                description="Audita e aplica as correções mecânicas do veredito (idempotente, marcador GENIAL-BLINDA).")
+    p.add_argument("dir", nargs="?", default=".")
+    p.add_argument("--dry-run", action="store_true", help="mostra o que seria feito sem tocar em arquivo")
+    a = p.parse_args(argv)
+    h = home()
+    bl = os.path.join(h, "skills", "cidadela", "scripts", "blindagem.py")
+    if not os.path.isfile(bl):
+        print(ERRO("Skill cidadela incompleta (sem scripts/blindagem.py). Rode: %s" % INSTALL_CMD))
+        return 1
+    if not os.path.isdir(a.dir):
+        print(ERRO("Diretório não existe: %s" % a.dir))
+        return 1
+    print(BOLDO("Cidadela · blindagem em %s …\n" % a.dir))
+    r = subprocess.run([sys.executable, bl] + (["--dry-run"] if a.dry_run else []) + [a.dir])
+    print(CINZA("\nOs itens MANUAIS são decisão de engenharia — Fases 4–6 da skill cidadela."))
     return r.returncode
 
 
@@ -369,6 +391,47 @@ def cmd_arq(argv):
     return 0
 
 
+def cmd_ui(argv):
+    p = argparse.ArgumentParser(prog="genial ui",
+                                description="Frontend enterprise zero-dependência: tokens, temas claro/escuro, acessibilidade WCAG 2.1 AA e responsivo mobile-first.")
+    p.add_argument("--copiar", metavar="DIR", default=None, help="copia o pacote para DIR (idempotente, não sobrescreve)")
+    a = p.parse_args(argv)
+    h = home()
+    base = os.path.join(h, "templates", "frontend")
+    if not os.path.isdir(base):
+        print(ERRO("Pacote sem templates/frontend — rode 'genial update'."))
+        return 1
+    resumo = ""
+    try:
+        linhas = [l.strip() for l in open(os.path.join(base, "README.md"), encoding="utf-8").read().splitlines()]
+        resumo = next((l.lstrip("> ").strip() for l in linhas[1:] if l.strip() and not l.startswith("#")), "")
+    except OSError:
+        pass
+    if not a.copiar:
+        print(BOLDO("Genial Labs · frontend enterprise (v%s)" % VERSAO))
+        print(resumo or "Pacote de referência: tokens, temas claro/escuro, acessibilidade AA e responsividade.")
+        print(CINZA("\nuso: genial ui --copiar <DIR>   (index.html + css/ + js/ dentro de DIR)"))
+        print(CINZA("guia: docs/frontend.md · zero dependências externas — sirva com qualquer web server"))
+        return 0
+    destino = os.path.abspath(a.copiar)
+    criados = mantidos = 0
+    for raiz_p, dirs, arquivos in os.walk(base):
+        dirs.sort()
+        for f in sorted(arquivos):
+            rel = os.path.relpath(os.path.join(raiz_p, f), base)
+            alvo = os.path.join(destino, rel)
+            if os.path.exists(alvo):
+                mantidos += 1
+                continue
+            os.makedirs(os.path.dirname(alvo), exist_ok=True)
+            shutil.copyfile(os.path.join(raiz_p, f), alvo)
+            criados += 1
+            print("  + %s" % rel)
+    print(OK("frontend -> %s (%d criado(s), %d mantido(s))" % (destino, criados, mantidos)))
+    print(CINZA("Siga %s/README.md — quando usar, quando NÃO usar e como adotar os tokens num app React/Vue." % destino))
+    return 0
+
+
 def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
     if not argv or argv[0] in ("-h", "--help", "help"):
@@ -378,7 +441,7 @@ def main(argv=None):
     cmd, resto = argv[0], argv[1:]
     funcs = {"banner": lambda r: (banner(), 0)[1],
              "init": cmd_init, "doctor": cmd_doctor, "skills": cmd_skills,
-             "deploy": cmd_deploy, "arq": cmd_arq, "update": cmd_update, "uninstall": cmd_uninstall}
+             "deploy": cmd_deploy, "arq": cmd_arq, "blinda": cmd_blinda, "ui": cmd_ui, "update": cmd_update, "uninstall": cmd_uninstall}
     if cmd not in funcs:
         print(ERRO("comando desconhecido: %s" % cmd))
         print(__doc__)

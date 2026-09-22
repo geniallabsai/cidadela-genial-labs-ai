@@ -16,10 +16,10 @@
 O argumento contra "projeto feito com IA" quase sempre é o mesmo: vai vazar dado, a arquitetura
 quebra e o pipeline não segura nada. A resposta do Genial Labs não é tecla — é um pacote que o
 instalador coloca na sua máquina e **guia o projeto inteiro**: a skill **Cidadela** (8 fases de
-engenharia) + o comando `genial` (scaffold guiado, **auditoria com veredito MANTER/BLINDAR/MIGRAR**, escada de infra) + templates de
+engenharia) + o comando `genial` (scaffold guiado, **auditoria com veredito e blindagem automática**, frontend enterprise, escada de infra) + templates de
 arquitetura de dados e de deploy.
 
-📖 **Documentação completa para a comunidade:** [`docs/`](docs/README.md) — 13 páginas, da
+📖 **Documentação completa para a comunidade:** [`docs/`](docs/README.md) — 14 páginas, da
 iniciação rápida ao modelo de token, escritas para virarem o site oficial.
 
 ## Arquiteturas prontas (v1.1.0)
@@ -36,6 +36,26 @@ Além do monólito baseline do `genial init`, o pacote traz **cinco arquiteturas
 | `saas-multitenant` | Multi-tenant shared-schema com chave por tenant | Produto vendido para várias organizações |
 
 Guia de decisão completo: [`docs/arquiteturas.md`](docs/arquiteturas.md).
+
+## Frontend enterprise e blindagem automática (v1.3.0)
+
+Duas peças completam o sistema nesta versão:
+
+- **`genial ui`** — pacote de referência **zero-dependência** para a camada visual: tokens de design
+  (temas claro/escuro, contraste WCAG 2.1 AA), acessibilidade (foco visível, skip-link, ARIA,
+  movimento reduzido), responsividade mobile-first (grid fluido, tabela que empilha no celular,
+  alvos de toque ≥ 44 px) e página de status conectada ao `/healthz` da sua API.
+- **`genial blinda [DIR]`** — aplica as correções mecânicas do veredito da auditoria (idempotente,
+  marcador `GENIAL-BLINDA`): `/healthz`, CORS por allowlist, segredos em ambiente, JWT curto, rate
+  limit + helmet, modo strict, Dockerfile/compose com healthcheck, gates de CI e teste de fumaça —
+  terminando com a auditoria **antes→depois** por componente.
+
+```bash
+genial ui --copiar publico/    # index.html + css/ + js/ dentro de publico/
+genial blinda meu-app          # auditoria + correções mecânicas (há --dry-run)
+```
+
+Guias: [`docs/frontend.md`](docs/frontend.md) · [`docs/comandos-genial.md`](docs/comandos-genial.md).
 
 ## Instalação
 

@@ -57,6 +57,7 @@ genial doctor ../outro   # outro caminho
 ```
 O relatório termina com **veredito por componente** (MANTER/BLINDAR/MIGRAR/OBSERVAR):
 cada linha traz evidência `arquivo:linha` e a próxima ação concreta.
+Para aplicar as correções mecânicas do veredito: `genial blinda [DIR]`.
 
 ## `genial skills`
 
@@ -90,6 +91,36 @@ Senão (instalado por zip) → mostra o comando de reinstalação, que é idempo
 Remove exatamente o que o instalador colocou: `~/.genial-labs/`, `~/.local/bin/genial` e as
 cópicas da skill em `~/.agents/skills/cidadela` e `~/.claude/skills/cidadela`. Sem `-y`, pede
 confirmação no terminal.
+
+## `genial blinda [DIR] [--dry-run]`
+
+**Auditoria + correção mecânica** — roda o inventário (veredito MANTER/BLINDAR/MIGRAR) e aplica as
+correções determinísticas: `/healthz`, CORS por allowlist, segredos em ambiente (fail-fast), JWT com
+expiração curta, rate limit + helmet, `tsconfig strict`, Dockerfile/compose com healthcheck, CI com
+gates e teste de fumaça. Cada edição leva o marcador `GENIAL-BLINDA` (segunda passada é no-op) e a
+saída termina com a auditoria **ANTES → DEPOIS** por componente. O que é decisão de engenharia sai
+como lista **MANUAIS** para as Fases 4–6 da cidadela.
+
+```bash
+genial blinda                # projeto atual
+genial blinda ../app         # outro caminho
+genial blinda ../app --dry-run
+```
+
+## `genial ui [--copiar DIR]`
+
+**Frontend enterprise zero-dependência** — tokens de design (temas claro/escuro, contraste
+WCAG 2.1 AA), acessibilidade (skip-link, foco visível, ARIA, movimento reduzido) e responsividade
+mobile-first (grid fluido, tabela empilhável no celular, alvos de toque ≥ 44 px). Sem framework, sem
+build; a página incluída demonstra todos os componentes em estado vivo, com status conectado ao
+`/healthz` da API.
+
+```bash
+genial ui                    # o que é + como usar
+genial ui --copiar publico/  # index.html + css/ + js/ dentro de publico/
+```
+
+Guia completo (quando usar e quando NÃO usar): [`frontend.md`](frontend.md).
 
 ## Códigos de saída
 
