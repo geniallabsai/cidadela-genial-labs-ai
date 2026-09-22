@@ -1,0 +1,2 @@
+# copie para .dev.vars (não versionar) — usado por `wrangler dev`
+ENV=local

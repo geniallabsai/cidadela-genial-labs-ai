@@ -9,6 +9,7 @@ Comandos:
   genial doctor        auditoria do projeto atual (roda a skill cidadela — Fase 0)
   genial skills        lista skills instaladas (Codex / Claude Code)
   genial deploy        degrau atual de infraestrutura (0–5) + próximo passo
+  genial arq           arquiteturas prontas (serverless · microserviços · SaaS): lista/copia
   genial update        atualiza o pacote
   genial uninstall     remove tudo que o instalador colocou
 """
@@ -30,7 +31,7 @@ if os.name == "nt":
         except Exception:
             pass
 
-VERSAO = "1.0.4"
+VERSAO = "1.1.0"
 REPO_GIT = "https://github.com/geniallabsai/genial-labs.git"
 INSTALL_CMD = "curl -fsSL https://raw.githubusercontent.com/geniallabsai/genial-labs/main/install.sh | bash"
 
@@ -69,7 +70,7 @@ def banner():
     for linha in arte():
         print(AZUL(linha))
     print(AZUL("    Genial Labs · arquitetura + dados + segurança + infra que guia seu código"))
-    print(CINZA("    v%s · comandos: init | doctor | skills | deploy | update | uninstall" % VERSAO))
+    print(CINZA("    v%s · comandos: init | doctor | skills | deploy | arq | update | uninstall" % VERSAO))
 
 
 def home():
@@ -315,6 +316,59 @@ def cmd_uninstall(argv):
     return 0
 
 
+def cmd_arq(argv):
+    p = argparse.ArgumentParser(prog="genial arq",
+                                description="Arquiteturas prontas: lista as disponíveis e copia a escolhida para um diretório.")
+    p.add_argument("arq", nargs="?", default=None, help="nome da arquitetura (veja a lista)")
+    p.add_argument("--copiar", metavar="DIR", default=None, help="diretório de destino (padrão: ./<arq>)")
+    p.add_argument("-l", "--listar", action="store_true", help="só lista e sai")
+    a = p.parse_args(argv)
+    h = home()
+    base = os.path.join(h, "templates", "arquiteturas")
+    if not os.path.isdir(base):
+        print(ERRO("Pacote sem templates/arquiteturas — rode 'genial update'."))
+        return 1
+    disponiveis = sorted(d for d in os.listdir(base) if os.path.isdir(os.path.join(base, d)))
+
+    def resumo(nome):
+        readme = os.path.join(base, nome, "README.md")
+        try:
+            linhas = [l.strip() for l in open(readme, encoding="utf-8").read().splitlines()]
+        except OSError:
+            return ""
+        return next((l.lstrip("> ").strip() for l in linhas[1:] if l.strip() and not l.startswith("#")), "")
+
+    if a.listar or a.arq is None:
+        print(BOLDO("Arquiteturas prontas neste pacote (v%s):" % VERSAO))
+        for d in disponiveis:
+            print("  %-22s %s" % (d, resumo(d)))
+        print(CINZA("Copiar: genial arq <nome> [--copiar DIR] · guia: docs/arquiteturas.md"))
+        if a.arq is not None and a.arq not in disponiveis:
+            print(ERRO("arquitetura desconhecida: %s — disponíveis: %s" % (a.arq, ", ".join(disponiveis))))
+            return 2
+        return 0
+    if a.arq not in disponiveis:
+        print(ERRO("arquitetura desconhecida: %s — disponíveis: %s" % (a.arq, ", ".join(disponiveis))))
+        return 2
+    origem = os.path.join(base, a.arq)
+    destino = os.path.abspath(a.copiar or a.arq)
+    criados = 0
+    for raiz_p, dirs, arquivos in os.walk(origem):
+        dirs.sort()
+        for f in sorted(arquivos):
+            rel = os.path.relpath(os.path.join(raiz_p, f), origem)
+            alvo = os.path.join(destino, rel)
+            if os.path.exists(alvo):
+                continue
+            os.makedirs(os.path.dirname(alvo), exist_ok=True)
+            shutil.copyfile(os.path.join(raiz_p, f), alvo)
+            criados += 1
+            print("  + %s" % rel)
+    print(OK("'%s' -> %s (%d arquivo(s) criado(s))" % (a.arq, destino, criados)))
+    print(CINZA("Leia %s/README.md — decisão, limites da plataforma e comando de deploy." % destino))
+    return 0
+
+
 def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
     if not argv or argv[0] in ("-h", "--help", "help"):
@@ -324,7 +378,7 @@ def main(argv=None):
     cmd, resto = argv[0], argv[1:]
     funcs = {"banner": lambda r: (banner(), 0)[1],
              "init": cmd_init, "doctor": cmd_doctor, "skills": cmd_skills,
-             "deploy": cmd_deploy, "update": cmd_update, "uninstall": cmd_uninstall}
+             "deploy": cmd_deploy, "arq": cmd_arq, "update": cmd_update, "uninstall": cmd_uninstall}
     if cmd not in funcs:
         print(ERRO("comando desconhecido: %s" % cmd))
         print(__doc__)

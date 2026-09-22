@@ -46,6 +46,7 @@ Depois é abrir o projeto no Codex ou Claude Code e falar: **"cidadela: audite e
 | [Arquitetura de dados](arquitetura-de-dados.md) | Por que os dados guiam a programação: donos, contratos, gates, dinheiro em centavos |
 | [Segurança ofensiva e defensiva](seguranca-ofensiva-defensiva.md) | A primeira hora do atacante, os 12 canais de vazamento, PII brasileira, gates de CI |
 | [Plataforma e cloud](plataforma-e-cloud.md) | A escada VPS→Docker→K8s→AWS, deploy zero-downtime e IA no produto |
+| [Arquiteturas prontas](arquiteturas.md) | Guia de decisão: serverless (Vercel/Lambda/Workers), microserviços e SaaS multi-tenant — com packs copiáveis |
 | [Legado e migração](legado-e-migracao.md) | Reverter engenharia em código antigo e migrar de linguagem sem parar o sistema |
 | [Acesso e token](acesso-e-token.md) | O modelo de registro + token pessoal (com o site oficial) — e o estado atual do beta |
 | [FAQ](faq.md) | Windows? Atualização? Seguros? Licença? Tudo que perguntam primeiro |
@@ -54,7 +55,7 @@ Depois é abrir o projeto no Codex ou Claude Code e falar: **"cidadela: audite e
 
 ## Estado atual
 
-- **v1.0.1 — beta público.** A instalação está **aberta** para a comunidade (sem cadastro).
+- **v1.1.0 — beta público.** A instalação está **aberta** para a comunidade (sem cadastro).
 - Com o lançamento do **site oficial**, a instalação passa a ser feita com **token pessoal**:
   cada pessoa se cadastra e recebe a chave própria (ver [Acesso e token](acesso-e-token.md)).
 - Suporte e sugestões: abra uma issue no repositório `geniallabsai/genial-labs`.

@@ -1,0 +1,9 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "genial-exemplo-worker",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-01",
+  // KV opcional — crie com: npx wrangler kv namespace create STORAGE
+  // "kv_namespaces": [{ "binding": "STORAGE", "id": "COLE_O_ID_AQUI" }],
+  "observability": { "enabled": true }
+}

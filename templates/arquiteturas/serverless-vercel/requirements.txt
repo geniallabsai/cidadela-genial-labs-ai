@@ -1,0 +1,1 @@
+# zero dependências — apenas stdlib (WsgiApp nativo da Vercel)

@@ -1,0 +1,36 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Genial Labs — Lambda + API Gateway (serverless, zero dependência)
+Globals:
+  Function:
+    Timeout: 10
+    MemorySize: 256
+Resources:
+  FuncaoExemplo:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handler.lambda_handler
+      Runtime: python3.12
+      FunctionName: genial-exemplo
+      Environment:
+        Variables:
+          API_KEY: ''   # preencha em Production: sam deploy --parameter-overrides APIKey=xxx
+      Events:
+        Saude:
+          Type: Api
+          Properties:
+            Path: /saude
+            Method: ANY
+        Eco:
+          Type: Api
+          Properties:
+            Path: /eco
+            Method: ANY
+        Raiz:
+          Type: Api
+          Properties:
+            Path: /
+            Method: ANY
+Outputs:
+  Endpoint:
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"

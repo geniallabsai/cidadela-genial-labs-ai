@@ -1,0 +1,36 @@
+# Genial Labs — microserviços de exemplo. Porta única externa: 8080 (gateway).
+services:
+  gateway:
+    build: ./gateway
+    ports: ["8080:8080"]
+    depends_on:
+      servico-a: { condition: service_healthy }
+      servico-b: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:8080/healthz').then(r => { if (!r.ok) process.exit(1); })"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+  servico-a:
+    build: ./servico-a
+    environment: [PORTA=8001, SERVICO=servico-a]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8001/healthz')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 3s
+  servico-b:
+    build: ./servico-b
+    environment: [PORTA=8002]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:8002/healthz').then(r => { if (!r.ok) process.exit(1); })"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 3s
+  # Opcional: docker compose --profile cache up (para cache real entre serviços)
+  redis:
+    image: redis:7-alpine
+    profiles: ["cache"]

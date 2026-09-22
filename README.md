@@ -19,8 +19,23 @@ instalador coloca na sua máquina e **guia o projeto inteiro**: a skill **Cidade
 engenharia) + o comando `genial` (scaffold guiado, auditoria, escada de infra) + templates de
 arquitetura de dados e de deploy.
 
-📖 **Documentação completa para a comunidade:** [`docs/`](docs/README.md) — 12 páginas, da
+📖 **Documentação completa para a comunidade:** [`docs/`](docs/README.md) — 13 páginas, da
 iniciação rápida ao modelo de token, escritas para virarem o site oficial.
+
+## Arquiteturas prontas (v1.1.0)
+
+Além do monólito baseline do `genial init`, o pacote traz **cinco arquiteturas copiáveis**
+(`genial arq`), cada uma com README de decisão, limites da plataforma e comando de deploy:
+
+| `genial arq <nome>` | O que é | Para quem |
+|---|---|---|
+| `serverless-vercel` | Funções WSGI na Vercel (zero dependência) | Webhooks, APIs finas, tráfego intermitente |
+| `serverless-lambda` | AWS Lambda + API Gateway (template SAM) | Ecossistema AWS, eventos, custo por uso |
+| `serverless-cloudflare` | Workers na borda com KV opcional | Latência global, fronteira, plano grátis |
+| `microservicos` | Gateway + 2 serviços com compose e healthchecks | Escala/partição real medida (não achada) |
+| `saas-multitenant` | Multi-tenant shared-schema com chave por tenant | Produto vendido para várias organizações |
+
+Guia de decisão completo: [`docs/arquiteturas.md`](docs/arquiteturas.md).
 
 ## Instalação
 
