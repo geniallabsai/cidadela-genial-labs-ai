@@ -55,7 +55,9 @@ Depois é abrir o projeto no Codex ou Claude Code e falar: **"cidadela: audite e
 
 ## Estado atual
 
-- **v1.1.0 — beta público.** A instalação está **aberta** para a comunidade (sem cadastro).
+- **v1.2.0 — beta público.** A auditoria (`genial doctor`) agora fecha com **veredito por componente**
+  (MANTER/BLINDAR/MIGRAR/OBSERVAR) sobre arquitetura, linguagem, backend, banco de dados e segurança.
+- Anterior: v1.1.0 (arquiteturas prontas `genial arq`). A instalação está **aberta** para a comunidade (sem cadastro).
 - Com o lançamento do **site oficial**, a instalação passa a ser feita com **token pessoal**:
   cada pessoa se cadastra e recebe a chave própria (ver [Acesso e token](acesso-e-token.md)).
 - Suporte e sugestões: abra uma issue no repositório `geniallabsai/genial-labs`.

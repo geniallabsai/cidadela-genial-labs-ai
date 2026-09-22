@@ -36,8 +36,11 @@ python3 scripts/grafico-servicos.py .
 O inventário entrega: linguagens/LOC, manifestos/frameworks, topologia de deploy, entrypoints, testes,
 alertas de segurança (secrets, .env, `http://`, estado compartilhado), sinais de multi-tenancy e
 **cheiro de código gerado por IA** (eval/deserialização, CORS `*`, debug ligado, JWT fraco, segredo em
-log, webhook sem assinatura, SQL por concatenação, catch vazio, `any`, TODO). Sem Python 3: comandos
-manuais no rodapé de cada script.
+log, webhook sem assinatura, SQL por concatenação, catch vazio, `any`, TODO). Fecha com **veredito por componente** (MANTER/BLINDAR/MIGRAR/OBSERVAR):
+arquitetura (monolito, multi-deployable, serverless), linguagem/runtime (Node/TS, Python/Django,
+Go e outras), backend, banco de dados, multitenancy e segurança transversal — cada linha com
+evidência `arquivo:linha` e a próxima ação (ordem: MIGRAR runtime, depois BLINDAR P0, OBSERVAR,
+mantendo os gates). Sem Python 3: comandos manuais no rodapé de cada script.
 
 ## Fase 1 — Raio-X (leitura estrutural)
 1. **Topologia.** 1 deployable = monolito. Vários = independência real? (deploy próprio? estado próprio?)

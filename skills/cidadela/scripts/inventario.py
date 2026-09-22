@@ -6,7 +6,8 @@ Uso:
 
 Saída: resumo em markdown (ou JSON) com linguagens/LOC, manifestos e frameworks,
 topologia de deploy (compose/k8s/Dockerfile/CI), pontos de entrada, testes,
-alertas de segurança, sinais de multi-tenancy e cheiro de código gerado por IA.
+alertas de segurança, sinais de multi-tenancy, cheiro de código gerado por IA e
+veredito por componente (MANTER/BLINDAR/MIGRAR/OBSERVAR) com a próxima ação de cada um.
 Apenas stdlib; heurísticas de melhor esforço — o agente completa a leitura na Fase 1 da skill.
 """
 import json
@@ -310,6 +311,329 @@ def scan_ai_smells(files, root):
     return {'totais': dict(cnt), 'exemplos': ex, 'webhooks': wh, 'assinaturas': sig, 'maps': len(maps)}
 
 
+RUNTIME_MIN = {'node': (18,), 'python': (3, 9), 'go': (1, 20)}
+PRIO_VEREDITO = {'MIGRAR': 3, 'BLINDAR': 2, 'OBSERVAR': 1, 'MANTER': 0}
+ICONE_VEREDITO = {'MIGRAR': '🔺', 'BLINDAR': '🛡️', 'OBSERVAR': '👀', 'MANTER': '✅'}
+
+RE_HEALTHZ = re.compile(r'/healthz?\b', re.I)
+RE_MEMORIA = re.compile(r'^(?:export\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:\[\]|\{\}|new Map\(|new Set\()')
+RE_DSN = (
+    ('PostgreSQL', re.compile(r'postgres(?:ql)?://|psycopg2?|pg\.connect|django\.db\.backends\.postgresql', re.I)),
+    ('MySQL', re.compile(r'mysql://|pymysql|mysql\.connector|django\.db\.backends\.mysql', re.I)),
+    ('MongoDB', re.compile(r'mongodb(\+srv)?://|pymongo|mongoose\b', re.I)),
+    ('Redis', re.compile(r'redis://|redis\.Redis\(|ioredis\b', re.I)),
+    ('SQLite', re.compile(r'sqlite3?://|sqlite3\.connect|django\.db\.backends\.sqlite', re.I)),
+)
+LOCKFILES = ('package-lock.json', 'yarn.lock', 'pnpm-lock.yaml')
+
+
+def _versoes_runtime(root, files):
+    """Versão declarada do runtime por linguagem (best-effort: engines/.nvmrc/Dockerfile/pyproject/go.mod)."""
+    v = {}
+    pkg = os.path.join(root, 'package.json')
+    if os.path.isfile(pkg):
+        try:
+            j = json.loads(read_text(pkg, 20000))
+            m = re.search(r'(\d+)', str((j.get('engines') or {}).get('node', '')))
+            if m:
+                v['node'] = (int(m.group(1)),)
+        except Exception:
+            pass
+    if 'node' not in v:
+        for cand in ('.nvmrc', '.node-version'):
+            p = os.path.join(root, cand)
+            if os.path.isfile(p):
+                m = re.search(r'(\d+)', read_text(p))
+                if m:
+                    v['node'] = (int(m.group(1)),)
+                    break
+    if 'node' not in v:
+        for f in files:
+            if 'dockerfile' in os.path.basename(f).lower():
+                m = re.search(r'FROM\s+node:(\d+)', read_text(os.path.join(root, f), 20000))
+                if m:
+                    v['node'] = (int(m.group(1)),)
+                    break
+    if 'python' not in v:
+        p = os.path.join(root, '.python-version')
+        if os.path.isfile(p):
+            m = re.search(r'(\d+)\.(\d+)', read_text(p))
+            if m:
+                v['python'] = (int(m.group(1)), int(m.group(2)))
+    if 'python' not in v:
+        pyproj = os.path.join(root, 'pyproject.toml')
+        if os.path.isfile(pyproj):
+            m = re.search(r'requires-python\s*=\s*["\']?>=?\s*(\d+)\.(\d+)', read_text(pyproj))
+            if m:
+                v['python'] = (int(m.group(1)), int(m.group(2)))
+    gomod = os.path.join(root, 'go.mod')
+    if os.path.isfile(gomod):
+        m = re.search(r'^go\s+(\d+)\.(\d+)', read_text(gomod), re.M)
+        if m:
+            v['go'] = (int(m.group(1)), int(m.group(2)))
+    return v
+
+
+def _extras_veredito(root, files):
+    """Checagens direcionadas do veredito: health, estado em memória, lockfile, tsconfig strict, deps, bancos."""
+    x = {'health': 0, 'health_ex': [], 'memoria': [], 'lockfile': None, 'strict': None, 'deps': {}, 'dbs': []}
+    for f in files:
+        if os.path.basename(f) in LOCKFILES:
+            x['lockfile'] = f
+            break
+    pkg = os.path.join(root, 'package.json')
+    if os.path.isfile(pkg):
+        try:
+            j = json.loads(read_text(pkg, 20000))
+            for k in ('dependencies', 'devDependencies'):
+                for nome in (j.get(k) or {}):
+                    x['deps'][nome.lower()] = True
+        except Exception:
+            pass
+    tsc = os.path.join(root, 'tsconfig.json')
+    if os.path.isfile(tsc):
+        m = re.search(r'"strict"\s*:\s*(true|false)', read_text(tsc))
+        x['strict'] = bool(m and m.group(1) == 'true')
+    ignorar = ('default', 'app', 'server', 'router', 'express', 'fastify')
+    n = 0
+    for rel in files:
+        if os.path.splitext(rel)[1] not in ('.js', '.ts', '.jsx', '.tsx', '.py', '.go'):
+            continue
+        n += 1
+        if n > 400:
+            break
+        txt = read_text(os.path.join(root, rel), 120000)
+        for i, line in enumerate(txt.splitlines(), 1):
+            if x['health'] < 3 and RE_HEALTHZ.search(line):
+                x['health'] += 1
+                x['health_ex'].append('%s:%d' % (rel, i))
+            mm = RE_MEMORIA.match(line.strip())
+            if mm and len(x['memoria']) < 5:
+                nome = mm.group(1)
+                if nome.lower() not in ignorar and nome.islower():
+                    x['memoria'].append('%s:%d %s' % (rel, i, nome))
+    encontrados = set()
+    n = 0
+    for rel in files:
+        base = os.path.basename(rel)
+        if not (os.path.splitext(base)[1] in LANG_EXT or base.endswith(('.yml', '.yaml', '.toml', '.ini')) or base.startswith('.env')):
+            continue
+        n += 1
+        if n > 400:
+            break
+        txt = read_text(os.path.join(root, rel), 60000)
+        for nome_db, rx in RE_DSN:
+            if rx.search(txt):
+                encontrados.add(nome_db)
+    for f in files:
+        if f.endswith(('.db', '.sqlite', '.sqlite3')):
+            encontrados.add('SQLite')
+    x['dbs'] = sorted(encontrados)
+    return x
+
+
+def construir_veredito(ctx):
+    """Veredito determinístico por componente: MANTER/BLINDAR/MIGRAR/OBSERVAR + próxima ação.
+
+    Heurística de melhor esforço com evidência — o agente consolida nas Fases 2–3 da skill.
+    """
+    root, files = ctx['root'], ctx['files']
+    ai = ctx['ai']
+    tot = ai['totais']
+    extra = _extras_veredito(root, files)
+    versoes = _versoes_runtime(root, files)
+    rows = []
+    fwtxt = ' '.join(str(x) for x in ctx['frameworks']).lower()
+    if os.path.isfile(os.path.join(root, 'manage.py')):
+        fwtxt += ' django'
+
+    def add(comp, verd, porque, acao):
+        for r in rows:
+            if r['componente'] == comp:
+                if PRIO_VEREDITO[verd] > PRIO_VEREDITO[r['veredito']]:
+                    r['veredito'] = verd
+                r['porque'] += '; ' + porque
+                r['acao'] += ' · ' + acao
+                return
+        rows.append({'componente': comp, 'veredito': verd, 'porque': porque, 'acao': acao})
+
+    def garantir(comp, verd, porque, acao):
+        if not any(r['componente'] == comp for r in rows):
+            add(comp, verd, porque, acao)
+
+    # ── Arquitetura ──
+    if ctx['n_units'] >= 2:
+        if ctx['shared_state']:
+            add('Arquitetura (multi-deployable)', 'MIGRAR',
+                'estado compartilhado entre unidades (%s) — distribuído-monolito, o pior dos dois mundos' % ', '.join(ctx['shared_state'][:3]),
+                'consolidar ANTES de dividir — reverso do strangler (references/plano-cirurgia.md)')
+        else:
+            garantir('Arquitetura (multi-deployable)', 'MANTER',
+                     '%d unidades sem estado compartilhado detectado' % ctx['n_units'],
+                     'comprovar independência (deploy+estado próprios) e gates por serviço (assets/workflow-ci-gates.yml)')
+    else:
+        razoes, acoes = [], []
+        if ctx['total_tests'] == 0:
+            razoes.append('nenhum teste (quebra muda tudo em silêncio)')
+            acoes.append('suíte mínima de caracterização (plano-cirurgia.md §1)')
+        if not ctx['ci']:
+            razoes.append('sem gate de CI')
+            acoes.append('instalar gates prontos do pacote (.github/workflows)')
+        if extra['memoria']:
+            razoes.append('estado em memória (%s) — quebra com a 2ª instância/scale-out' % '; '.join(extra['memoria'][:2]))
+            acoes.append('estado para banco/fila antes de escalar horizontalmente')
+        if extra['health'] == 0:
+            razoes.append('sem /healthz — docker/k8s/serverless não sabe se o processo vive')
+            acoes.append('rota /healthz JSON + healthcheck (templates do pacote)')
+        if razoes:
+            add('Arquitetura (monolito)', 'BLINDAR', '; '.join(razoes), '; '.join(acoes))
+        else:
+            garantir('Arquitetura (monolito)', 'MANTER',
+                     'monolito único com testes/CI/health em ordem',
+                     'regra-mãe: monolito modular — dividir exige ≥2 sinais medidos (references/monolito-vs-microservicos.md)')
+    if any(os.path.basename(f) in ('vercel.json', 'wrangler.jsonc') for f in files):
+        garantir('Arquitetura (serverless)', 'MANTER', 'funções stateless na plataforma gerenciada',
+                 'conferir limites do plano (maxDuration/CPU ms) e zero estado local (docs/arquiteturas.md)')
+
+    # ── Linguagens/runtimes ──
+    tsjs = ctx['lang_loc'].get('TypeScript', 0) + ctx['lang_loc'].get('JavaScript', 0)
+    if tsjs:
+        comp = 'Linguagem (TypeScript/Node.js)'
+        vn = versoes.get('node')
+        if vn is None:
+            add(comp, 'OBSERVAR', 'versão do runtime Node não declarada em lugar nenhum',
+                'declarar engines + Dockerfile/.nvmrc com tag fixa')
+        elif vn < RUNTIME_MIN['node']:
+            add(comp, 'MIGRAR', 'runtime Node %d abaixo do mínimo 18 (janela de EOL/seus patches)' % vn[0],
+                'subir para Node ≥18 (em 2026: LTS 20/22) e travar no engines')
+        else:
+            add(comp, 'MANTER', 'runtime Node %d ≥ mínimo' % vn[0], 'travar engines + imagem com tag')
+        if os.path.isfile(os.path.join(root, 'package.json')) and extra['lockfile'] is None:
+            add(comp, 'BLINDAR', 'sem lockfile — instalação irreprodutível (clássico de scaffold de IA)',
+                'gerar e commitar package-lock.json + gate "lock difere" no CI')
+        if extra['strict'] is False:
+            add(comp, 'BLINDAR', 'tsconfig sem "strict" — tipagem fraca esconde o que quebra depois',
+                'ativar "strict": true e corrigir gradualmente com tsc --noEmit no CI')
+        if tot.get('any/ignora tipo', 0) >= 3:
+            add(comp, 'BLINDAR', '%d escapes de tipo (any) — cheiro de código-IA §4' % tot.get('any/ignora tipo', 0),
+                'tipar contratos/handlers; `any` novo deve derrubar lint')
+        if tot.get('eval/exec/deserialização', 0):
+            add(comp, 'BLINDAR', 'eval/deserialização insegura presente (%d)' % tot['eval/exec/deserialização'],
+                'parse explícito com allowlist (ofensiva.md §4)')
+        if sum(tot.values()) >= 8:
+            add(comp, 'BLINDAR', 'score total de cheiro-IA ≥ 8 — vale o check de 60s categoria a categoria',
+                'rodar Fase 5 §4 com o inventário em mãos')
+
+    pyloc = ctx['lang_loc'].get('Python', 0)
+    if pyloc:
+        comp = 'Linguagem (Python)'
+        vp = versoes.get('python')
+        if vp is None:
+            add(comp, 'OBSERVAR', 'versão do Python não declarada', 'requires-python no pyproject + .python-version')
+        elif vp < RUNTIME_MIN['python']:
+            add(comp, 'MIGRAR', 'Python %s.%s abaixo do mínimo 3.9' % vp, 'subir para ≥3.11 (2026) com expand-contract')
+        else:
+            add(comp, 'MANTER', 'Python %s.%s ≥ mínimo' % vp, 'travar versão no CI/imagens')
+        if 'django' in fwtxt:
+            if tot.get('debug ligado', 0):
+                add(comp, 'BLINDAR', 'Django com DEBUG ligado (%d) — trace completo vira página pública' % tot['debug ligado'],
+                    'DEBUG vindo de env, desligado em staging/prod + WSGI server real')
+            if not any('/migrations/' in f or os.path.basename(f).startswith('000') for f in files):
+                add(comp, 'OBSERVAR', 'Django sem migrations versionadas visíveis', 'makemigrations + gate de schema no CI')
+
+    goloc = ctx['lang_loc'].get('Go', 0)
+    if goloc:
+        comp = 'Linguagem (Go)'
+        vg = versoes.get('go')
+        if vg is None:
+            add(comp, 'OBSERVAR', 'versão Go não lida do go.mod', 'declarar toolchain atual no go.mod')
+        elif vg < RUNTIME_MIN['go']:
+            add(comp, 'MIGRAR', 'Go %s.%s abaixo do mínimo 1.20' % vg, 'subir toolchain e regenerar go.sum')
+        else:
+            add(comp, 'MANTER', 'Go %s.%s ≥ mínimo' % vg, 'travar toolchain no CI')
+        if not any(os.path.basename(f) == 'go.sum' for f in files):
+            add(comp, 'BLINDAR', 'sem go.sum — dependências não reproduzíveis', 'go mod tidy + commit go.sum')
+
+    # ── Backend/API ──
+    if ctx['frameworks']:
+        comp = 'Backend (API)'
+        nomes = ', '.join(str(x) for x in ctx['frameworks'][:4])
+        if extra['health'] == 0:
+            add(comp, 'BLINDAR', 'stack (%s) sem rota de saúde visível' % nomes,
+                '/healthz JSON (padrão dos templates Genial Labs) + probe no deploy')
+        node_fw = any(k in fwtxt for k in ('express', 'fastify', 'koa', 'nestjs'))
+        if node_fw and extra['deps']:
+            if not any(re.search(r'rate.?limit|limiter|throttle', k) for k in extra['deps']):
+                add(comp, 'BLINDAR', 'API Node pública sem rate limit nas dependências',
+                    'rate-limit por IP + resposta 429 com Retry-After')
+            if 'helmet' not in extra['deps']:
+                add(comp, 'OBSERVAR', 'sem headers de segurança (helmet)', 'helmet ou HSTS/CSP equivalentes')
+        garantir(comp, 'MANTER', 'stack de backend sem bloqueio estrutural detectado',
+                 'manter gates de CI (references/ci-cd.md)')
+
+    # ── Banco de dados ──
+    dbs = extra['dbs']
+    if dbs:
+        comp = 'Banco de dados (%s)' % ' + '.join(dbs)
+        ex_sql = [e for e in ai['exemplos'].get('SQL por concatenação', []) if ':' in e and not e.endswith(':0')]
+        if tot.get('SQL por concatenação', 0):
+            add(comp, 'BLINDAR', '%d query por concatenação — porta de SQL injection%s' % (
+                tot['SQL por concatenação'], (' (ex.: %s)' % ex_sql[0]) if ex_sql else ''),
+                'queries parametrizadas/prepared + teste negativo no CI')
+        if dbs == ['SQLite'] and ctx['frameworks']:
+            add(comp, 'OBSERVAR', 'apenas SQLite em projeto web — escrita concorrente limitada',
+                'planear salto para Postgres quando houver >1 writer (references/arquitetura-dados.md)')
+        garantir(comp, 'MANTER', 'nada estrutural bloqueando', 'backup testado (restore exercitado, cloud-deploy.md)')
+    else:
+        garantir('Banco de dados (nenhum detectado)', 'OBSERVAR',
+                 'nenhum DSN/banco óbvio — o estado pode estar em memória (risco ainda maior)',
+                 'confirmar onde mora o estado na Fase 1')
+
+    # ── Multitenancy ──
+    if ctx['mt']['modelo'] != 'nenhum sinal automático':
+        add('Multi-tenancy', 'BLINDAR', 'isolamento por tenant em jogo (modelo: %s; T1–T6 obrigatórios)' % ctx['mt']['modelo'],
+            'matriz T1–T6 + teste negativo de vazamento no CI (references/multitenancy.md)%s' % (
+                '; cache SEM escopo de tenant (%d) é o canal clássico' % ctx['mt']['cache_sem'] if ctx['mt']['cache_sem'] else ''))
+
+    # ── Segurança transversal ──
+    comp = 'Segurança (transversal)'
+    if ctx['secret_hits']:
+        add(comp, 'BLINDAR', '%d segredos possíveis commitados em código' % len(ctx['secret_hits']),
+            'rotacionar TUDO + gitleaks/secret gate no CI (references/ci-cd.md)')
+    if ctx['env_files']:
+        add(comp, 'BLINDAR', '.env na árvore do repo (%s) — secret versionado' % ', '.join(ctx['env_files'][:2]),
+            'remover de repo E histórico; deixar só .env.example')
+    if tot.get('CORS aberto (*)', 0):
+        add(comp, 'BLINDAR', 'CORS * aberto (%d)' % tot['CORS aberto (*)'], 'allowlist de origins por ambiente')
+    if tot.get('JWT fraco/padrão', 0):
+        add(comp, 'BLINDAR', 'JWT com segredo padrão/algo fraco (%d)' % tot['JWT fraco/padrão'],
+            'segredo forte rotacionado + expiração curta + refresh token')
+    if tot.get('shell injetável', 0):
+        add(comp, 'BLINDAR', 'execução de shell montada por string (%d) — injeção de comando' % tot['shell injetável'],
+            'execFile/argv como lista, nunca string interpolada')
+    if tot.get('segredo em log/print', 0):
+        add(comp, 'BLINDAR', 'segredos indo para log (%d)' % tot['segredo em log/print'], 'sanitizar logs + remover as linhas')
+    if ai['webhooks'] and not ai['assinaturas']:
+        add(comp, 'BLINDAR', 'webhook sem verificação de assinatura', 'checar HMAC assinatura (evento forjado = dados falsos)')
+    if ctx['http_refs']:
+        add(comp, 'OBSERVAR', '%d ocorrência(s) de http:// não-localhost (sem TLS)' % ctx['http_refs'], 'https em todo salto (ingress/cert)')
+    garantir(comp, 'MANTER', 'nenhum bloqueio transversal detectado', 'manter gates de segredos no CI')
+
+    # ── Ordenação + markdown ──
+    rows.sort(key=lambda r: (-PRIO_VEREDITO[r['veredito']], r['componente']))
+    counts = Counter(r['veredito'] for r in rows)
+    md = ['## Veredito por componente (auditoria)', '',
+          '| Componente | Veredito | Por quê | Próxima ação |',
+          '|---|---|---|---|']
+    for r in rows:
+        md.append('| %s | %s %s | %s | %s |' % (r['componente'], ICONE_VEREDITO[r['veredito']], r['veredito'], r['porque'], r['acao']))
+    md.append('')
+    md.append('Resumo: %s.' % ' · '.join('%d %s' % (counts[v], v) for v in ('MIGRAR', 'BLINDAR', 'OBSERVAR', 'MANTER') if counts.get(v)))
+    md.append('Ordem sugerida: MIGRAR primeiro (runtime sustenta o resto) → BLINDAR pelos P0 (segredos, SQL, CORS) → OBSERVAR → depois, manter os gates.')
+    md.append('Heurística de melhor esforço com evidência — o agente consolida nas Fases 2–3 da skill; o checkpoint humano segue obrigatório.')
+    md.append('')
+    return rows, md
+
 def main():
     args = [a for a in sys.argv[1:] if a != '--json']
     as_json = '--json' in sys.argv[1:]
@@ -574,6 +898,14 @@ def main():
         'maiores_arquivos': [{'linhas': n, 'arquivo': r} for n, r in big[:10]],
     }
 
+    vrows, vmd = construir_veredito({'root': root, 'files': files, 'lang_loc': lang_loc,
+                                     'frameworks': frameworks, 'n_units': n_units,
+                                     'shared_state': shared_state, 'ci': ci,
+                                     'total_tests': total_tests, 'ai': ai, 'mt': mt,
+                                     'secret_hits': secret_hits, 'env_files': env_files,
+                                     'http_refs': http_refs})
+    result['veredito'] = vrows
+    result['veredito_md'] = vmd
     if as_json:
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
@@ -675,6 +1007,7 @@ def main():
     for n, r in big[:10]:
         lines.append('- %6d  %s' % (n, r))
     lines.append('')
+    lines.extend(vmd)
     lines.append('## Fallback manual (sem Python)')
     lines.append('```bash')
     lines.append('find . -type d -name node_modules -prune -o -type f -print | wc -l')

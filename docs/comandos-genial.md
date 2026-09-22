@@ -55,6 +55,8 @@ continuar (Fases 1–7 rodam dentro do agente).
 genial doctor            # pasta atual
 genial doctor ../outro   # outro caminho
 ```
+O relatório termina com **veredito por componente** (MANTER/BLINDAR/MIGRAR/OBSERVAR):
+cada linha traz evidência `arquivo:linha` e a próxima ação concreta.
 
 ## `genial skills`
 

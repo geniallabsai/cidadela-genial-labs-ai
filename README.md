@@ -16,7 +16,7 @@
 O argumento contra "projeto feito com IA" quase sempre é o mesmo: vai vazar dado, a arquitetura
 quebra e o pipeline não segura nada. A resposta do Genial Labs não é tecla — é um pacote que o
 instalador coloca na sua máquina e **guia o projeto inteiro**: a skill **Cidadela** (8 fases de
-engenharia) + o comando `genial` (scaffold guiado, auditoria, escada de infra) + templates de
+engenharia) + o comando `genial` (scaffold guiado, **auditoria com veredito MANTER/BLINDAR/MIGRAR**, escada de infra) + templates de
 arquitetura de dados e de deploy.
 
 📖 **Documentação completa para a comunidade:** [`docs/`](docs/README.md) — 13 páginas, da

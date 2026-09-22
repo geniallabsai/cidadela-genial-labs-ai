@@ -6,7 +6,7 @@ Comandos:
   genial               banner + resumo
   genial banner        arte GENIAL LABS (azul tech)
   genial init [DIR]    projeto novo: arquitetura de dados + skeleton + Docker/compose/k8s + gates CI
-  genial doctor        auditoria do projeto atual (roda a skill cidadela — Fase 0)
+  genial doctor        auditoria: stack, riscos e veredito MANTER/BLINDAR/MIGRAR (Fase 0 da cidadela)
   genial skills        lista skills instaladas (Codex / Claude Code)
   genial deploy        degrau atual de infraestrutura (0–5) + próximo passo
   genial arq           arquiteturas prontas (serverless · microserviços · SaaS): lista/copia
@@ -31,7 +31,7 @@ if os.name == "nt":
         except Exception:
             pass
 
-VERSAO = "1.1.0"
+VERSAO = "1.2.0"
 REPO_GIT = "https://github.com/geniallabsai/genial-labs.git"
 INSTALL_CMD = "curl -fsSL https://raw.githubusercontent.com/geniallabsai/genial-labs/main/install.sh | bash"
 
@@ -184,7 +184,7 @@ def cmd_init(argv):
 
 
 def cmd_doctor(argv):
-    p = argparse.ArgumentParser(prog="genial doctor", description="Audita o projeto (Fase 0 da skill cidadela).")
+    p = argparse.ArgumentParser(prog="genial doctor", description="Audita o projeto: detecta arquitetura/linguagem/backend/banco e emite veredito MANTER/BLINDAR/MIGRAR/OBSERVAR (Fase 0 da cidadela).")
     p.add_argument("dir", nargs="?", default=".")
     a = p.parse_args(argv)
     h = home()
