@@ -5,12 +5,16 @@
 > **infra**) que guia cada projeto — em qualquer linguagem.
 
 ```
-██████╗   ██████╗  ███╗   ███╗  ███╗  █████╗  ██╗      ██████╗  ██████╗  ██████╗  ███████╗
-██╔══██╗ ██╔═══██╗ ██╔██╗ ██╔╝  ████╗ ██╔══██╗██║     ██╔═══██╗██╔═══██╗██╔═══██╗ ██╔════╝
-██████╔╝ ██║   ██║ ███████║    ██╔██╗ ███████║██║     ██║   ██║██║   ██║██║   ██║ ███████╗
-██╔══██╗ ██║   ██║ ██╔══██║    ██║╚██╗ ██╔══██║██║     ██║   ██║██║   ██║██║   ██║ ██╔══╝
-██║  ██║ ╚██████╔╝ ██║  ██║    ██║ ╚████╗██║  ██║██║   ╚██████╔╝╚██████╔╝╚██████╔╝ ███████╗
-╚═╝  ╚═╝  ╚═════╝  ╚═╝  ╚═╝    ╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝   ╚═════╝  ╚═════╝  ╚═════╝  ╚══════╝
+  __     _   ____     _     ____    _____   _      _
+ / _ \  | | |_  _ |  | |   |_  _ | |_   _| | |    | |
+| (_) | | |  / /     | |    / /      | |   | |    | |
+ \___/  |_|  / /_|   | |_   / /_|    | |   | |__  | |_
+            /_/ \_   |___| /_/ \_    |_|   |___|  |___|
+  ___    _____   _  _    _    _     _       _      _     _   _    __       _     _
+ / _ \  |_   _| | \| |  | |  | |   | |     | |    | |   | | | |  / _ \    | |   | |
+| (_) |   | |   | .  |  | |  | |   | |     | |    | |   | |_| | | |       | |   | |
+ \__, |   | |   | |\ |  |_|  | |_  | |__   | |__  | |_  |  _  | | |       | |_  |_|
+ |__/     |_|   |_| |_|      |___| |___|   |___|  |___| |_| |_| \_/       |___|
 ```
 
 O argumento contra "projeto feito com IA" quase sempre é o mesmo: vai vazar dado, a arquitetura
@@ -161,12 +165,12 @@ genial-labs/
 ├── install.sh / install.ps1      # instaladores (Unix/Git Bash · Windows nativo)
 ├── uninstall.sh / uninstall.ps1
 ├── .gitattributes                # força \n no checkout (clone Windows não corrói o CLI)
-├── genial                        # CLI (python3 stdlib): init/doctor/skills/deploy/update/uninstall
-├── docs/                         # documentação completa da comunidade (12 páginas, site-ready)
+├── genial                        # CLI (python3 stdlib): init/doctor/blinda/skills/deploy/arq/ui/update/uninstall
+├── docs/                         # documentação completa da comunidade (14 páginas, site-ready)
 ├── skills/cidadela/              # a skill (8 fases — idêntica à de cidadela.skill)
 │   ├── SKILL.md                  # orquestrador (frontmatter name+description)
 │   ├── references/               # 14 protocolos: dados, legado, linguagem, cloud, ofensiva, vazamentos…
-│   ├── scripts/                  # inventario.py (cheiro de IA) + grafico-servicos.py
+│   ├── scripts/                  # inventario.py (veredito) + blindagem.py + grafico-servicos.py
 │   └── assets/                   # relatório, ADR, workflow-ci-gates.yml
 └── templates/                    # ARCHITETURA-DADOS.md, Dockerfiles, compose, k8s/, skeletons py/node/go
 ```
@@ -178,6 +182,10 @@ python3 ≥ 3.7 (stdlib) · git/curl opcionais · para os projetos: a toolchain 
 
 ## Changelog
 
+- **v1.3.1** (2026-09-22): banner corrigido — a arte era desenhada com glifos de bloco (`█▀║`) que
+  fontes sem suporte mostram como quadrados; agora é **ASCII puro** (renderiza em qualquer
+  fonte/console) e carrega os dois nomes da casa: **CIDADELA** sobre **GENIAL LABS AI**.
+  Vale para o README e para `genial banner`.
 - **v1.0.4** (2026-09-22): correção Windows — o CLI `genial` e o wrapper `genial.cmd`
   agora forçam UTF-8 (`chcp 65001` + `PYTHONUTF8=1` + `errors=replace`), eliminando o
   `UnicodeEncodeError` da arte `█` e dos acentos em consoles CP1252/OEM; instalação e uso

@@ -56,9 +56,10 @@ Depois é abrir o projeto no Codex ou Claude Code e falar: **"cidadela: audite e
 
 ## Estado atual
 
-- **v1.3.0 — beta público.** `genial blinda` aplica as correções mecânicas do veredito (idempotente,
-  marcador `GENIAL-BLINDA`, auditoria ANTES→DEPOIS por componente) e `genial ui` entrega o frontend
-  enterprise zero-dependência (tokens, temas claro/escuro, acessibilidade AA, responsivo mobile-first).
+- **v1.3.1 — beta público.** Banner corrigido: a arte era em glifos de bloco (`█▀║`) e virava
+  quadrados em fontes sem suporte; agora é **ASCII puro** e carrega os nomes **Cidadela**
+  e **Genial Labs AI**. Base v1.3.0: `genial blinda` (correções mecânicas do veredito,
+  idempotente, auditoria ANTES→DEPOIS) e `genial ui` (frontend enterprise zero-dependência).
 - Anterior: v1.2.0 (veredito por componente na auditoria). A instalação está **aberta** para a comunidade (sem cadastro).
 - Com o lançamento do **site oficial**, a instalação passa a ser feita com **token pessoal**:
   cada pessoa se cadastra e recebe a chave própria (ver [Acesso e token](acesso-e-token.md)).
