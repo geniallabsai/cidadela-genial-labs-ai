@@ -19,7 +19,18 @@ import shutil
 import subprocess
 import sys
 
-VERSAO = "1.0.3"
+# Windows: força UTF-8 nos streams de saída. Consoles OEM/CP1252 com
+# stdout pipeado quebravam a arte (blocos █/╔) e os acentos com
+# UnicodeEncodeError, derrubando `genial banner` e o self-test do instalador.
+if os.name == "nt":
+    os.environ.setdefault("PYTHONUTF8", "1")
+    for _st in (sys.stdout, sys.stderr):
+        try:
+            _st.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
+VERSAO = "1.0.4"
 REPO_GIT = "https://github.com/geniallabsai/genial-labs.git"
 INSTALL_CMD = "curl -fsSL https://raw.githubusercontent.com/geniallabsai/genial-labs/main/install.sh | bash"
 

@@ -6,6 +6,8 @@ param([switch]$Repo)
 
 $ErrorActionPreference = "Stop"
 try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
+$env:PYTHONUTF8 = "1"
+$env:PYTHONIOENCODING = "utf-8"
 
 $RepoUrl = "https://github.com/geniallabsai/genial-labs.git"
 $ZipUrl  = "https://codeload.github.com/geniallabsai/genial-labs/zip/refs/heads/main"
@@ -100,6 +102,9 @@ try {
 @echo off
 rem Genial Labs - wrapper gerado pelo instalador (Windows)
 setlocal
+chcp 65001 >nul
+set "PYTHONUTF8=1"
+set "PYTHONIOENCODING=utf-8"
 set "PYCMD="
 where py >nul 2>nul && set "PYCMD=py -3"
 if not defined PYCMD where python >nul 2>nul && set "PYCMD=python"

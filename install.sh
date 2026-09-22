@@ -105,6 +105,8 @@ cat > "$HOME/.local/bin/genial" <<'GL_WRAPPER'
 #!/bin/sh
 # Genial Labs — wrapper gerado pelo instalador (Linux/macOS/WSL/Git Bash)
 # O programa real vive em ~/.genial-labs/genial (Python stdlib, sem dependências).
+export PYTHONUTF8=1
+export PYTHONIOENCODING=utf-8
 PY="$(command -v python3 || command -v python)"
 if [ -z "$PY" ]; then
   echo "genial: python3 nao encontrado no PATH (instale Python 3.7+ e reabra o terminal)." >&2
